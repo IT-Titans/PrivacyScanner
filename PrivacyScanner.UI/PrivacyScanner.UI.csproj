@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>ITTitans.PrivacyScanner.UI</RootNamespace>
+        <AssemblyName>$(RootNamespace)</AssemblyName>
+        <TargetFramework>$(TargetFramework)-windows</TargetFramework>
+        <OutputType>WinExe</OutputType>
+        <UseWPF>true</UseWPF>
+        <ApplicationIcon>Resources\PrivacyScannerLogo.ico</ApplicationIcon>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="MaterialDesignColors" />
+        <PackageReference Include="MaterialDesignThemes" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+        <PackageReference Include="Mediator.Abstractions" />
+        <PackageReference Include="Mediator.SourceGenerator">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Serilog" />
+        <PackageReference Include="Serilog.Extensions.Logging" />
+        <PackageReference Include="Serilog.Sinks.File" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\PrivacyScanner.Infrastructure\PrivacyScanner.Infrastructure.csproj" />
+      <ProjectReference Include="..\PrivacyScanner.Infrastructure.Interfaces\PrivacyScanner.Infrastructure.Interfaces.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Resource Include="Resources\PrivacyScannerLogo.ico" />
+    </ItemGroup>
+</Project>

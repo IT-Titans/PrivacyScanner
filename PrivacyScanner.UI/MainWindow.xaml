@@ -1,0 +1,403 @@
+﻿<Window x:Class="ITTitans.PrivacyScanner.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewModels="clr-namespace:ITTitans.PrivacyScanner.UI.ViewModels"
+        xmlns:converters="clr-namespace:ITTitans.PrivacyScanner.UI.Converters"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel, IsDesignTimeCreatable=False}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="14"
+        TextOptions.TextFormattingMode="Ideal" 
+        TextOptions.TextRenderingMode="Auto"
+        Background="{StaticResource PrimaryColor}"
+        FontFamily="{md:MaterialDesignFont}"
+        Icon="pack://application:,,,/Resources/PrivacyScannerLogo.ico"
+        Title="Privacy Scanner" Height="800" Width="1000">
+    
+    <Window.Resources>
+        <md:NullableToVisibilityConverter x:Key="NullableToVisibilityConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:BoolToBackgroundConverter x:Key="BoolToBackgroundConverter" />
+        <converters:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
+        <converters:BoolToIconConverter x:Key="BoolToIconConverter" />
+    </Window.Resources>
+    
+    <md:DialogHost Identifier="RootDialog">
+        <Grid Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Pfadauswahl -->
+                <RowDefinition Height="Auto"/> <!-- Regex Suche -->
+                <RowDefinition Height="Auto"/> <!-- Regex Regeln -->
+                <RowDefinition Height="Auto"/> <!-- Steuerung -->
+                <RowDefinition Height="Auto"/> <!-- Progress -->
+                <RowDefinition Height="*"/>    <!-- Log -->
+            </Grid.RowDefinitions>
+
+            <!-- 1. Pfadauswahl -->
+            <Grid Grid.Row="0" Margin="0,0,0,8" IsEnabled="{Binding IsConfigurationEnabled}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Scan-Ordner Auswahl -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                             Text="{Binding SelectedPath}"
+                             md:HintAssist.Hint="Wähle Ordner zum Scannen"
+                             IsReadOnly="True"
+                             Focusable="False"
+                             Cursor="Arrow"
+                             VerticalContentAlignment="Center"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+
+                    <Button Grid.Column="1"
+                            Margin="8,0,0,0"
+                            Padding="12,0"
+                            Height="40"
+                            VerticalAlignment="Center"
+                            Command="{Binding SelectPathCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="Ordner auswählen"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0" />
+                            <md:PackIcon Kind="FolderOpen"
+                                         Width="18"
+                                         Height="18"
+                                         VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                
+                <!-- Export-Datei Auswahl (optional) -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                             Text="{Binding ExportFilePath}"
+                             md:HintAssist.Hint="Export-Datei (optional)"
+                             IsReadOnly="True"
+                             Focusable="False"
+                             Cursor="Arrow"
+                             VerticalContentAlignment="Center"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+
+                    <Button Grid.Column="1"
+                            Margin="8,0,0,0"
+                            Padding="12,0"
+                            Height="40"
+                            VerticalAlignment="Center"
+                            Command="{Binding SelectExportFileCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="CSV-Export"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0" />
+                            <md:PackIcon Kind="FileExport"
+                                         Width="18"
+                                         Height="18"
+                                         VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    
+                    <Button Grid.Column="2"
+                            Margin="8,0,0,0"
+                            Padding="8,0"
+                            Height="40"
+                            VerticalAlignment="Center"
+                            Command="{Binding ClearExportFileCommand}"
+                            ToolTip="Export-Pfad löschen"
+                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <md:PackIcon Kind="Close"
+                                     Width="18"
+                                     Height="18"
+                                     VerticalAlignment="Center" />
+                    </Button>
+                </Grid>
+            </Grid>
+
+            <!-- 2. Regex-Suche -->
+<Grid Grid.Row="1" Margin="0,8,0,8" IsEnabled="{Binding IsConfigurationEnabled}">
+    <Grid.ColumnDefinitions>
+        <!-- Suchleiste halbe Breite der rechten Card -->
+        <ColumnDefinition Width="0.5*" />
+        <!-- Buttons -->
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+
+    <!-- Suchleiste mit Lupe und Hint -->
+    <md:ColorZone Grid.Column="0"
+                  Background="{StaticResource FloatingColor}"
+                  Mode="Standard"
+                  Padding="8,4"
+                  CornerRadius="2"
+                  md:ElevationAssist.Elevation="Dp2"
+                  HorizontalAlignment="Left">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Lupe links -->
+            <md:PackIcon Kind="Search"
+                         VerticalAlignment="Center"
+                         Margin="0,0,8,0" />
+
+            <!-- TextBox mit Hinweis -->
+            <TextBox Grid.Column="1"
+                     Text="{Binding RegexSearchText, UpdateSourceTrigger=PropertyChanged}"
+                     md:TextFieldAssist.DecorationVisibility="Hidden"
+                     md:HintAssist.Hint="Durchsuche verfügbare Regeln"
+                     BorderThickness="0"
+                     VerticalAlignment="Center"
+                     MinWidth="150" />
+        </Grid>
+    </md:ColorZone>
+
+
+    <!-- Regel hinzufügen -->
+    <Button Grid.Column="1"
+            Margin="8,0,0,0"
+            Padding="12,0"
+            Height="36"
+            VerticalAlignment="Center"
+            Command="{Binding AddNewRegexCommand}"
+            Style="{StaticResource RoundedActionButton}">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Regel hinzufügen"
+                       Margin="0,0,8,0"/>
+            <md:PackIcon Kind="Plus"/>
+        </StackPanel>
+    </Button>
+
+    <!-- Regeln bearbeiten -->
+    <Button Grid.Column="2"
+            Margin="8,0,0,0"
+            Padding="12,0"
+            Height="36"
+            VerticalAlignment="Center"
+            Command="{Binding OpenSettingsCommand}"
+            Style="{StaticResource RoundedActionButton}">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Regeln bearbeiten"
+                       Margin="0,0,8,0"/>
+            <md:PackIcon Kind="Settings"/>
+        </StackPanel>
+    </Button>
+</Grid>
+
+            <!-- 3. Regex Regeln (gekachelt) -->
+            <md:Card Grid.Row="2" Padding="0" Margin="0,0,0,16" Background="{DynamicResource MaterialDesignPaper}" IsEnabled="{Binding IsConfigurationEnabled}">
+                <DockPanel>
+                    <Border Background="{StaticResource FloatingColor}" Padding="8" DockPanel.Dock="Top">
+                        <TextBlock Text="Regex-Regeln"
+                                   Foreground="White"
+                                   FontWeight="SemiBold"/>
+                    </Border>
+                    <Border Background="{StaticResource SecondaryColor}" Height="4" DockPanel.Dock="Top"/>
+                    <Border Background="{StaticResource FloatingColor}" Padding="8">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="150">
+                            <ItemsControl ItemsSource="{Binding FilteredRegexRules}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="4" Padding="8,4" CornerRadius="4"
+                                                Background="{Binding IsEnabled, Converter={StaticResource BoolToBackgroundConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding RuleName}" 
+                                                           VerticalAlignment="Center"
+                                                           Foreground="White"
+                                                           FontWeight="{Binding IsEnabled, Converter={StaticResource BoolToFontWeightConverter}}"/>
+                                                <Button Command="{Binding DataContext.ToggleRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Width="20"
+                                                        Height="20"
+                                                        Padding="0"
+                                                        Foreground="White"
+                                                        Style="{StaticResource MaterialDesignIconButton}">
+                                                    <md:PackIcon Kind="{Binding IsEnabled, Converter={StaticResource BoolToIconConverter}}" Width="16" Height="16"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </DockPanel>
+            </md:Card>
+
+            <!-- 4. Scan-Steuerung -->
+            <StackPanel Grid.Row="3" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,0,0,16">
+                <CheckBox Content="{Binding SpacyCheckboxContent}"
+                          IsChecked="{Binding IsSpacyEnabled, Mode=TwoWay}"
+                          IsEnabled="{Binding IsSpacyCheckboxEnabled}"
+                          HorizontalAlignment="Center"
+                          Margin="0,0,0,12"
+                          Foreground="{StaticResource TextColor}"
+                          Style="{StaticResource MaterialDesignCheckBox}"/>
+                <Button Command="{Binding ToggleScanCommand}" 
+                        Width="200" Height="50"
+                        Style="{StaticResource AppPrimaryButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="{Binding ScanButtonIcon}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding ScanButtonText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- 5. Fortschritt -->
+            <StackPanel Grid.Row="4" Margin="0,0,0,16">
+                <Grid Margin="0,0,0,4">
+                    <TextBlock Text="{Binding StatusText}" 
+                               Foreground="{StaticResource TextColor}" 
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Dateien: " Foreground="{StaticResource TextColor}"/>
+                        <TextBlock Text="{Binding ScannedFilesCount}" Foreground="{StaticResource TextColor}" FontWeight="Bold"/>
+                        <TextBlock Text=" / " Foreground="{StaticResource TextColor}"/>
+                        <TextBlock Text="{Binding TotalFilesCount}" Foreground="{StaticResource TextColor}" FontWeight="Bold"/>
+                    </StackPanel>
+                </Grid>
+                <Grid>
+                    <ProgressBar Style="{StaticResource AppProgressBarStyle}" 
+                                 Value="{Binding Progress}" 
+                                 IsIndeterminate="{Binding IsProgressIndeterminate}"
+                                 Height="30" 
+                                 md:TransitionAssist.DisableTransitions="True" />
+                    <TextBlock Text="{Binding ProgressDisplayText}" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextColor}" 
+                               FontWeight="Bold"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- 6. Log-Bereich -->
+            <md:Card Grid.Row="5" Padding="0" Background="{DynamicResource MaterialDesignPaper}">
+    <DockPanel>
+        <Border Background="{StaticResource FloatingColor}" Padding="8" DockPanel.Dock="Top">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Log" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <Run Text="Gesamt: "/>
+                        <Run Text="{Binding TotalWarningsCount}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <Border Background="#077aba" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                        <TextBlock Foreground="White" VerticalAlignment="Center">
+                            <Run Text="Regex: "/>
+                            <Run Text="{Binding RegexWarningsCount}" FontWeight="Bold"/>
+                        </TextBlock>
+                    </Border>
+                    <Border Background="#9c27b0" CornerRadius="4" Padding="6,2">
+                        <TextBlock Foreground="White" VerticalAlignment="Center">
+                            <Run Text="SpaCy: "/>
+                            <Run Text="{Binding SpacyWarningsCount}" FontWeight="Bold"/>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Border Background="{StaticResource SecondaryColor}" Height="4" DockPanel.Dock="Top"/>
+        <ListBox ItemsSource="{Binding LogEntries}"
+                 Background="{StaticResource FloatingColor}"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.ScrollUnit="Pixel"
+                 VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <md:Card Background="{StaticResource SecondaryColor}" Margin="0,0,0,8" Padding="8" Cursor="Hand">
+                        <md:Card.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                          Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" 
+                                          CommandParameter="{Binding FilePath}"/>
+                        </md:Card.InputBindings>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
+                                <TextBlock FontWeight="Bold">
+                                    <Run Text="Warnung: "/>
+                                    <Run Text="{Binding Type}"/>
+                                </TextBlock>
+                                <Border CornerRadius="4" Padding="4,2" Margin="8,0,0,0" 
+                                        Visibility="{Binding SpacyLabel, Converter={StaticResource NullableToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding SpacyLabel}" FontSize="12" VerticalAlignment="Center" FontWeight="Bold"/>
+                                </Border>
+                                <Border CornerRadius="4" Padding="4,2" Margin="8,0,0,0" Background="#077aba"
+                                        Visibility="{Binding RuleName, Converter={StaticResource NullableToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding RuleName}" FontSize="12" VerticalAlignment="Center" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1" TextWrapping="Wrap" Margin="0,4,0,0">
+                                <Run Text="Gefunden in: "/>
+                                <Run Text="{Binding FilePath}" Foreground="{StaticResource TextColor}" FontWeight="Bold"/>
+                                <Run Text=" Zeile: "/>
+                                <Run Text="{Binding Line}" FontWeight="Bold"/>
+                                <Run Text=" Position: "/>
+                                <Run Text="{Binding Position}"/>
+                            </TextBlock>
+
+                            <Border Grid.Row="2" Background="#F5F5F5" CornerRadius="4" Padding="8" Margin="0,8,0,0">
+                                <TextBlock TextWrapping="Wrap" Foreground="Black" FontFamily="Courier New" FontSize="12">
+                                    <Run Text="   " />
+                                    <Run Text="{Binding PrevLine, Mode=OneWay}" Foreground="#80000000" />
+                                    <LineBreak/>
+                                    <Run Text=">> " FontWeight="Bold" Foreground="Red" />
+                                    <Run Text="{Binding BeforeTarget, Mode=OneWay}"/>
+                                    <Run Text="{Binding TargetContent, Mode=OneWay}" FontWeight="Bold" Foreground="Red" Background="LightYellow"/>
+                                    <Run Text="{Binding AfterTarget, Mode=OneWay}"/>
+                                    <LineBreak/>
+                                    <Run Text="   " />
+                                    <Run Text="{Binding NextLine, Mode=OneWay}" Foreground="#80000000" />
+                                </TextBlock>
+                            </Border>
+                        </Grid>
+                    </md:Card>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</md:Card>
+
+        </Grid>
+    </md:DialogHost>
+</Window>

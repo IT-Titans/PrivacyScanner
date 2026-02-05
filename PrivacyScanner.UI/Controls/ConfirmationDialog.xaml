@@ -1,0 +1,48 @@
+﻿<UserControl x:Class="ITTitans.PrivacyScanner.UI.Controls.ConfirmationDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="200" d:DesignWidth="400"
+             Background="{DynamicResource MaterialDesignPaper}">
+    <Grid Margin="24" Width="350">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="32" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" x:Name="TitleTextBlock" 
+                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                   Margin="0,0,0,16" TextWrapping="Wrap"/>
+
+        <TextBlock Grid.Row="1" x:Name="MessageTextBlock" 
+                   Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                   Margin="0,0,0,16" TextWrapping="Wrap"/>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="CancelButton"
+                    Content="Nein" 
+                    IsCancel="True"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Margin="0,0,8,0"
+                    Command="{x:Static md:DialogHost.CloseDialogCommand}">
+                <Button.CommandParameter>
+                    <System:Boolean xmlns:System="clr-namespace:System;assembly=mscorlib">False</System:Boolean>
+                </Button.CommandParameter>
+            </Button>
+            <Button x:Name="ConfirmButton"
+                    Content="Ja" 
+                    IsDefault="True"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Command="{x:Static md:DialogHost.CloseDialogCommand}">
+                <Button.CommandParameter>
+                    <System:Boolean xmlns:System="clr-namespace:System;assembly=mscorlib">True</System:Boolean>
+                </Button.CommandParameter>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

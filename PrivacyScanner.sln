@@ -1,0 +1,53 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.UI", "PrivacyScanner.UI\PrivacyScanner.UI.csproj", "{ED3D4DBC-AF41-4A73-A9A7-FE5428323144}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{9C3949F0-21A8-423A-9104-9082E3BAF13E}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		version.json = version.json
+		nuget.config = nuget.config
+		install.md = install.md
+		.github\workflows\pipeline.yml = .github\workflows\pipeline.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.Infrastructure.Interfaces", "PrivacyScanner.Infrastructure.Interfaces\PrivacyScanner.Infrastructure.Interfaces.csproj", "{8F244039-2A18-4986-BF6D-0CCAF813A92A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.Infrastructure", "PrivacyScanner.Infrastructure\PrivacyScanner.Infrastructure.csproj", "{858EE7AA-F26F-4C3A-ACC2-80FC700FDB90}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.Tests", "PrivacyScanner.Tests\PrivacyScanner.Tests.csproj", "{2D51D47B-6B34-4DF1-A279-BC0B3CA3F769}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.Model", "PrivacyScanner.Model\PrivacyScanner.Model.csproj", "{1BD7CD55-F3F8-49A0-B4EB-2C621C720EF7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ED3D4DBC-AF41-4A73-A9A7-FE5428323144}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED3D4DBC-AF41-4A73-A9A7-FE5428323144}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED3D4DBC-AF41-4A73-A9A7-FE5428323144}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED3D4DBC-AF41-4A73-A9A7-FE5428323144}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F244039-2A18-4986-BF6D-0CCAF813A92A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F244039-2A18-4986-BF6D-0CCAF813A92A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F244039-2A18-4986-BF6D-0CCAF813A92A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F244039-2A18-4986-BF6D-0CCAF813A92A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{858EE7AA-F26F-4C3A-ACC2-80FC700FDB90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{858EE7AA-F26F-4C3A-ACC2-80FC700FDB90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{858EE7AA-F26F-4C3A-ACC2-80FC700FDB90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{858EE7AA-F26F-4C3A-ACC2-80FC700FDB90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D51D47B-6B34-4DF1-A279-BC0B3CA3F769}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D51D47B-6B34-4DF1-A279-BC0B3CA3F769}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D51D47B-6B34-4DF1-A279-BC0B3CA3F769}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D51D47B-6B34-4DF1-A279-BC0B3CA3F769}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BD7CD55-F3F8-49A0-B4EB-2C621C720EF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BD7CD55-F3F8-49A0-B4EB-2C621C720EF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BD7CD55-F3F8-49A0-B4EB-2C621C720EF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BD7CD55-F3F8-49A0-B4EB-2C621C720EF7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal

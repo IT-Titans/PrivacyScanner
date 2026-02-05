@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>ITTitans.PrivacyScanner.Infrastructure</RootNamespace>
+        <AssemblyName>$(RootNamespace)</AssemblyName>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Mediator.Abstractions" />
+        <PackageReference Include="Serilog" />
+        <PackageReference Include="Serilog.Extensions.Logging" />
+        <PackageReference Include="Serilog.Sinks.File" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\PrivacyScanner.Infrastructure.Interfaces\PrivacyScanner.Infrastructure.Interfaces.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="Resources\spacy_scan.py" />
+    </ItemGroup>
+</Project>

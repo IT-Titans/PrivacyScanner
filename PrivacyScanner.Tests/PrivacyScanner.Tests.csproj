@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>ITTitans.PrivacyScanner.Tests</RootNamespace>
+        <AssemblyName>$(RootNamespace)</AssemblyName>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="Microsoft.NET.Test.Sdk" />
+      <PackageReference Include="Serilog" />
+      <PackageReference Include="Serilog.Extensions.Logging" />
+      <PackageReference Include="Serilog.Sinks.File" />
+      <PackageReference Include="xunit" />
+      <PackageReference Include="xunit.runner.visualstudio">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="coverlet.collector">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Moq" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\PrivacyScanner.Infrastructure\PrivacyScanner.Infrastructure.csproj" />
+      <ProjectReference Include="..\PrivacyScanner.Infrastructure.Interfaces\PrivacyScanner.Infrastructure.Interfaces.csproj" />
+      <ProjectReference Include="..\PrivacyScanner.Model\PrivacyScanner.Model.csproj" />
+    </ItemGroup>
+</Project>

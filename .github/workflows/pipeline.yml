@@ -1,0 +1,89 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Gitleaks Scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    runs-on: windows-latest
+    needs: scan
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # required for NBGV
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Check Codestyle (dotnet format)
+      run: dotnet format --verify-no-changes --verbosity diagnostic
+
+    - name: Install NBGV
+      run: dotnet tool install -g nbgv
+
+    - name: Set Version via NBGV
+      run: nbgv cloud
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build Solution
+      run: dotnet build --no-restore --configuration Release -p:TreatWarningsAsErrors=true
+
+    - name: Run Unit Tests
+      run: |
+        dotnet test PrivacyScanner.Tests\PrivacyScanner.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: ./TestResults/*.trx
+      if: always()
+
+    - name: Generate Coverage Report
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:Html
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: ./CoverageReport
+      if: always()
+
+    - name: Publish UI Application
+      run: dotnet publish PrivacyScanner.UI\PrivacyScanner.UI.csproj /p:PublishProfile=OneExe
+
+    - name: Prepare Artifact
+      run: |
+        New-Item -ItemType Directory -Force -Path ./Artifact
+        Copy-Item "PrivacyScanner.UI\bin\Publish\ITTitans.PrivacyScanner.UI.exe" -Destination "./Artifact/Privacy Scanner.exe"
+        Copy-Item "install.md" -Destination "./Artifact/install.md"
+
+    - name: Upload Published Executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: Privacy Scanner
+        path: ./Artifact/
