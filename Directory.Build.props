@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <Company>IT-Titans GmbH</Company>
         <Product>Privacy Scanner</Product>
+        <Version>1.0.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
