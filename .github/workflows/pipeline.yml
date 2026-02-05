@@ -1,4 +1,5 @@
 name: CI/CD Pipeline
+run-name: 1.0.0.${{ github.run_number }}
 
 on:
   push:
@@ -28,7 +29,22 @@ jobs:
       run: dotnet tool install -g nbgv
 
     - name: Set Version via NBGV
+      id: nbgv
       run: nbgv cloud
+
+    - name: Compute Version with Build
+      run: |
+        echo "VERSION_WITH_BUILD=${{ env.NBGV_SimpleVersion }}.${{ github.run_number }}" >> $GITHUB_ENV
+        echo "::notice::Build Version is ${{ env.NBGV_SimpleVersion }}.${{ github.run_number }}"
+
+    - name: Update Directory.Build.props Version
+      run: |
+        $version = "${{ env.NBGV_SimpleVersion }}.${{ github.run_number }}"
+        $path = "Directory.Build.props"
+        $xml = [xml](Get-Content $path)
+        $xml.Project.PropertyGroup.Version = $version
+        $xml.Save($path)
+        echo "Updated $path version to $version"
 
     - name: Restore dependencies
       run: dotnet restore
@@ -71,5 +87,5 @@ jobs:
     - name: Upload Published Executable
       uses: actions/upload-artifact@v4
       with:
-        name: Privacy Scanner
+        name: Privacy Scanner ${{ env.VERSION_WITH_BUILD }}
         path: ./Artifact/
