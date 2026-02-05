@@ -1,59 +1,59 @@
-# Anforderungen zum Start der Anwendung
+# Requirements for Starting the Application
 
-## 1. Erforderliche Python-Version
+## 1. Required Python Version
 
-**Anforderung:**
-Die Anwendung braucht explizit die Python Version **3.12.x**. Andere Versionen führen zu Fehlern.
+**Requirement:**
+The application explicitly requires Python version **3.12.x**. Other versions will cause errors.
 
 **Installation:**
-Python kann hier heruntergeladen werden:
+Python can be downloaded here:
 [Python 3.12.0 Download](https://www.python.org/downloads/release/python-3120/)
 
-**Wichtig bei der Installation:**
+**Important during installation:**
 
-* ✅ „Add Python to PATH“ aktivieren
-* ✅ Python Launcher (py) mitinstallieren
+* ✅ Enable "Add Python to PATH"
+* ✅ Install Python Launcher (py)
 
-**Überprüfung:**
+**Verification:**
 
 ```bash
 python --version
 ```
 
-**Ergebnis:**
+**Result:**
 
-* Richtig:
+* Correct:
 
 ```
 Python 3.12.0
 ```
 
-* Falsch:
+* Incorrect:
 
 ```
 Python 3.14.0
 ```
 
-**Korrektur:**
-Ist die falsche Python-Version installiert, muss diese deinstalliert und die richtige Version installiert werden.
+**Correction:**
+If the wrong Python version is installed, it must be uninstalled and the correct version must be installed.
 
-**Deinstallation:**
+**Uninstallation:**
 
-1. Einstellungen öffnen: `Apps → Installierte Apps`
-2. Nach Python suchen
-3. Einträge wie `Python 3.14.0 (64-bit)` auswählen
-4. **Deinstallieren** klicken
+1. Open Settings: `Apps → Installed Apps`
+2. Search for Python
+3. Select entries like `Python 3.14.0 (64-bit)`
+4. Click **Uninstall**
 
 ---
 
-## 2. Erforderliche Python-Pakete
+## 2. Required Python Packages
 
 **spaCy**
-Die Anwendung nutzt **spaCy** für sprachbasierte Analysen.
+The application uses **spaCy** for language-based analysis.
 
-**Mindestanforderung:**
+**Minimum requirement:**
 
-* spaCy installiert für Python 3.12
+* spaCy installed for Python 3.12
 
 **Installation:**
 
@@ -63,12 +63,12 @@ python -m pip install -U spacy
 
 ---
 
-## 3. Erforderliches spaCy-Sprachmodell
+## 3. Required spaCy Language Model
 
-**Deutsches Sprachmodell:** `de_core_news_sm`
-Dieses Modell wird für die Verarbeitung deutscher Texte benötigt.
+**German language model:** `de_core_news_sm`
+This model is required for processing German texts.
 
-**Installation des Modells:**
+**Model installation:**
 
 ```bash
 python -m spacy download de_core_news_sm
