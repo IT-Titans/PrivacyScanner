@@ -33,13 +33,14 @@ jobs:
       run: nbgv cloud
 
     - name: Compute Version with Build
+      shell: bash
       run: |
-        echo "VERSION_WITH_BUILD=${{ env.NBGV_SimpleVersion }}.${{ github.run_number }}" >> $GITHUB_ENV
-        echo "::notice::Build Version is ${{ env.NBGV_SimpleVersion }}.${{ github.run_number }}"
+        echo "VERSION_WITH_BUILD=${NBGV_SimpleVersion}.${{ github.run_number }}" >> $GITHUB_ENV
+        echo "::notice::Build Version is ${NBGV_SimpleVersion}.${{ github.run_number }}"
 
     - name: Update Directory.Build.props Version
       run: |
-        $version = "${{ env.NBGV_SimpleVersion }}.${{ github.run_number }}"
+        $version = "$env:NBGV_SimpleVersion.${{ github.run_number }}"
         $path = "Directory.Build.props"
         $xml = [xml](Get-Content $path)
         $xml.Project.PropertyGroup.Version = $version
