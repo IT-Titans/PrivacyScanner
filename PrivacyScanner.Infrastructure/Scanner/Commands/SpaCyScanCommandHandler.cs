@@ -53,7 +53,7 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
             options.Converters.Add(new SpaCyLabelConverter());
 
             var spacyResult = JsonSerializer.Deserialize<SpacyResult>(output, options);
-            
+
             if (spacyResult?.Entities == null)
             {
                 return new ScanResultDto { FilePath = request.FilePath, Warnings = warnings };
