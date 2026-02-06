@@ -31,6 +31,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private ObservableCollection<RegexRule> _allRegexRules = new();
     private ObservableCollection<RegexRule> _filteredRegexRules = new();
     private BulkObservableCollection<LogEntryViewModel> _logEntries = new();
+    private ObservableCollection<LogTreeNodeViewModel> _logTreeNodes = new();
     private bool _isScanning;
     private string _statusText = "Bereit";
     private int counter = 0;
@@ -264,6 +265,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     public ObservableCollection<RegexRule> FilteredRegexRules => _filteredRegexRules;
     public BulkObservableCollection<LogEntryViewModel> LogEntries => _logEntries;
+    public ObservableCollection<LogTreeNodeViewModel> LogTreeNodes => _logTreeNodes;
 
     public ICommand SelectPathCommand { get; }
     public ICommand SelectExportFileCommand { get; }
@@ -394,6 +396,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         TotalWarningsCount = 0;
         RegexWarningsCount = 0;
         SpacyWarningsCount = 0;
+        _logTreeNodes.Clear();
         _wasScanCancelled = false;
         IsProgressIndeterminate = true;
 
@@ -579,13 +582,89 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         // Asynchron und im Batch an den Dispatcher übergeben, um UI-Last zu minimieren
         System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
         {
-            LogEntries.AddRange(items, MaxLogEntries);
+            // LogEntries.AddRange(items, MaxLogEntries);
             TotalWarningsCount += items.Count;
             RegexWarningsCount += regexCount;
             SpacyWarningsCount += spacyCount;
+
+            UpdateTreeNodes(notification.ScanResultDto.FilePath.FullName, items);
         }));
 
         return ValueTask.CompletedTask;
+    }
+
+    private void UpdateTreeNodes(string filePath, List<LogEntryViewModel> warnings)
+    {
+        if (warnings.Count == 0) return;
+
+        var fileName = Path.GetFileName(filePath);
+        var fileNode = _logTreeNodes.OfType<FileLogNodeViewModel>()
+            .FirstOrDefault(n => n.FullPath == filePath);
+
+        if (fileNode == null)
+        {
+            fileNode = new FileLogNodeViewModel
+            {
+                Title = fileName,
+                FullPath = filePath,
+                WarningCount = 0
+            };
+            _logTreeNodes.Add(fileNode);
+        }
+
+        fileNode.WarningCount += warnings.Count;
+        fileNode.Title = $"{fileName} ({fileNode.WarningCount})";
+
+        foreach (var typeGroup in warnings.GroupBy(w => w.Type))
+        {
+            var typeTitle = typeGroup.Key == ScanWarningType.SpaCy ? "SpaCy" : "Regex/Rule";
+            var typeNode = fileNode.Children.OfType<TypeLogNodeViewModel>()
+                .FirstOrDefault(n => n.Type == typeGroup.Key);
+
+            if (typeNode == null)
+            {
+                typeNode = new TypeLogNodeViewModel
+                {
+                    Title = typeTitle,
+                    Type = typeGroup.Key,
+                    WarningCount = 0
+                };
+                fileNode.Children.Add(typeNode);
+            }
+
+            typeNode.WarningCount += typeGroup.Count();
+            typeNode.Title = $"{typeTitle} ({typeNode.WarningCount})";
+
+            foreach (var group in typeGroup.GroupBy(w => w.Type == ScanWarningType.SpaCy ? w.SpacyLabel?.ToString() ?? "Unknown" : w.RuleName ?? "Unknown"))
+            {
+                var groupName = group.Key;
+                var groupNode = typeNode.Children.OfType<GroupLogNodeViewModel>()
+                    .FirstOrDefault(n => n.GroupName == groupName);
+
+                if (groupNode == null)
+                {
+                    groupNode = new GroupLogNodeViewModel
+                    {
+                        Title = groupName,
+                        GroupName = groupName,
+                        WarningCount = 0
+                    };
+                    typeNode.Children.Add(groupNode);
+                }
+
+                groupNode.WarningCount += group.Count();
+                groupNode.Title = $"{groupName} ({groupNode.WarningCount})";
+
+                foreach (var warning in group)
+                {
+                    groupNode.Children.Add(new EntryLogNodeViewModel
+                    {
+                        Title = $"Zeile {warning.Line}: {warning.TargetContent}",
+                        Entry = warning
+                    });
+                }
+            }
+        }
     }
 
     public ValueTask Handle(FileScannedEvent notification, CancellationToken cancellationToken)

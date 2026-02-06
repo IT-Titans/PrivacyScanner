@@ -331,21 +331,39 @@
             </Grid>
         </Border>
         <Border Background="{StaticResource SecondaryColor}" Height="4" DockPanel.Dock="Top"/>
-        <ListBox ItemsSource="{Binding LogEntries}"
-                 Background="{StaticResource FloatingColor}"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 ScrollViewer.CanContentScroll="True"
-                 VirtualizingPanel.IsVirtualizing="True"
-                 VirtualizingPanel.ScrollUnit="Pixel"
-                 VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                 VirtualizingPanel.VirtualizationMode="Recycling">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <md:Card Background="{StaticResource SecondaryColor}" Margin="0,0,0,8" Padding="8" Cursor="Hand">
+        <TreeView ItemsSource="{Binding LogTreeNodes}"
+                  Background="{StaticResource FloatingColor}"
+                  BorderThickness="0"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <TreeView.Resources>
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:FileLogNodeViewModel}" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <md:PackIcon Kind="FileOutline" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="Bold"/>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:TypeLogNodeViewModel}" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <md:PackIcon Kind="ShieldSearch" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:GroupLogNodeViewModel}" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <md:PackIcon Kind="AlertCircleOutline" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+
+                <DataTemplate DataType="{x:Type viewModels:EntryLogNodeViewModel}">
+                    <md:Card Background="{StaticResource SecondaryColor}" Margin="0,2,8,2" Padding="8" Cursor="Hand" Width="800">
                         <md:Card.InputBindings>
                             <MouseBinding MouseAction="LeftClick" 
-                                          Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" 
-                                          CommandParameter="{Binding FilePath}"/>
+                                          Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=TreeView}}" 
+                                          CommandParameter="{Binding Entry.FilePath}"/>
                         </md:Card.InputBindings>
                         <Grid>
                             <Grid.RowDefinitions>
@@ -356,45 +374,51 @@
                             <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
                                 <TextBlock FontWeight="Bold">
                                     <Run Text="Warnung: "/>
-                                    <Run Text="{Binding Type}"/>
+                                    <Run Text="{Binding Entry.Type}"/>
                                 </TextBlock>
                                 <Border CornerRadius="4" Padding="4,2" Margin="8,0,0,0" 
-                                        Visibility="{Binding SpacyLabel, Converter={StaticResource NullableToVisibilityConverter}}">
-                                    <TextBlock Text="{Binding SpacyLabel}" FontSize="12" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        Visibility="{Binding Entry.SpacyLabel, Converter={StaticResource NullableToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding Entry.SpacyLabel}" FontSize="12" VerticalAlignment="Center" FontWeight="Bold"/>
                                 </Border>
                                 <Border CornerRadius="4" Padding="4,2" Margin="8,0,0,0" Background="#077aba"
-                                        Visibility="{Binding RuleName, Converter={StaticResource NullableToVisibilityConverter}}">
-                                    <TextBlock Text="{Binding RuleName}" FontSize="12" VerticalAlignment="Center" FontWeight="Bold" Foreground="White"/>
+                                        Visibility="{Binding Entry.RuleName, Converter={StaticResource NullableToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding Entry.RuleName}" FontSize="12" VerticalAlignment="Center" FontWeight="Bold" Foreground="White"/>
                                 </Border>
                             </StackPanel>
                             <TextBlock Grid.Row="1" TextWrapping="Wrap" Margin="0,4,0,0">
                                 <Run Text="Gefunden in: "/>
-                                <Run Text="{Binding FilePath}" Foreground="{StaticResource TextColor}" FontWeight="Bold"/>
+                                <Run Text="{Binding Entry.FilePath}" Foreground="{StaticResource TextColor}" FontWeight="Bold"/>
                                 <Run Text=" Zeile: "/>
-                                <Run Text="{Binding Line}" FontWeight="Bold"/>
+                                <Run Text="{Binding Entry.Line}" FontWeight="Bold"/>
                                 <Run Text=" Position: "/>
-                                <Run Text="{Binding Position}"/>
+                                <Run Text="{Binding Entry.Position}"/>
                             </TextBlock>
 
                             <Border Grid.Row="2" Background="#F5F5F5" CornerRadius="4" Padding="8" Margin="0,8,0,0">
                                 <TextBlock TextWrapping="Wrap" Foreground="Black" FontFamily="Courier New" FontSize="12">
                                     <Run Text="   " />
-                                    <Run Text="{Binding PrevLine, Mode=OneWay}" Foreground="#80000000" />
+                                    <Run Text="{Binding Entry.PrevLine, Mode=OneWay}" Foreground="#80000000" />
                                     <LineBreak/>
                                     <Run Text=">> " FontWeight="Bold" Foreground="Red" />
-                                    <Run Text="{Binding BeforeTarget, Mode=OneWay}"/>
-                                    <Run Text="{Binding TargetContent, Mode=OneWay}" FontWeight="Bold" Foreground="Red" Background="LightYellow"/>
-                                    <Run Text="{Binding AfterTarget, Mode=OneWay}"/>
+                                    <Run Text="{Binding Entry.BeforeTarget, Mode=OneWay}"/>
+                                    <Run Text="{Binding Entry.TargetContent, Mode=OneWay}" FontWeight="Bold" Foreground="Red" Background="LightYellow"/>
+                                    <Run Text="{Binding Entry.AfterTarget, Mode=OneWay}"/>
                                     <LineBreak/>
                                     <Run Text="   " />
-                                    <Run Text="{Binding NextLine, Mode=OneWay}" Foreground="#80000000" />
+                                    <Run Text="{Binding Entry.NextLine, Mode=OneWay}" Foreground="#80000000" />
                                 </TextBlock>
                             </Border>
                         </Grid>
                     </md:Card>
                 </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+            </TreeView.Resources>
+            
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                </Style>
+            </TreeView.ItemContainerStyle>
+        </TreeView>
     </DockPanel>
 </md:Card>
 
