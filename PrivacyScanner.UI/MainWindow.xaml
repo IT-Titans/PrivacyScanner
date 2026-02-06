@@ -24,6 +24,7 @@
         <converters:BoolToBackgroundConverter x:Key="BoolToBackgroundConverter" />
         <converters:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
         <converters:BoolToIconConverter x:Key="BoolToIconConverter" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
     </Window.Resources>
     
     <md:DialogHost Identifier="RootDialog">
@@ -338,11 +339,24 @@
                   VirtualizingStackPanel.VirtualizationMode="Recycling">
             <TreeView.Resources>
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:FileLogNodeViewModel}" ItemsSource="{Binding Children}">
-                    <StackPanel Orientation="Horizontal" Margin="2">
-                        <md:PackIcon Kind="FileOutline" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="Bold"/>
-                    </StackPanel>
+                    <Grid Margin="2">
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsLoading, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <md:PackIcon Kind="FileOutline" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
+                                         Value="0" IsIndeterminate="True" 
+                                         Width="16" Height="16" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="Bold" FontStyle="Italic"/>
+                            <TextBlock Text=" (Lade Details...)" VerticalAlignment="Center" FontSize="11" Margin="4,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
                 </HierarchicalDataTemplate>
+
+                <DataTemplate DataType="{x:Type viewModels:LoadingLogNodeViewModel}">
+                    <TextBlock Text="{Binding Title}" Margin="24,2,2,2" FontStyle="Italic" Foreground="Gray"/>
+                </DataTemplate>
 
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:TypeLogNodeViewModel}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal" Margin="2">
@@ -395,18 +409,39 @@
                             </TextBlock>
 
                             <Border Grid.Row="2" Background="#F5F5F5" CornerRadius="4" Padding="8" Margin="0,8,0,0">
-                                <TextBlock TextWrapping="Wrap" Foreground="Black" FontFamily="Courier New" FontSize="12">
-                                    <Run Text="   " />
-                                    <Run Text="{Binding Entry.PrevLine, Mode=OneWay}" Foreground="#80000000" />
-                                    <LineBreak/>
-                                    <Run Text=">> " FontWeight="Bold" Foreground="Red" />
-                                    <Run Text="{Binding Entry.BeforeTarget, Mode=OneWay}"/>
-                                    <Run Text="{Binding Entry.TargetContent, Mode=OneWay}" FontWeight="Bold" Foreground="Red" Background="LightYellow"/>
-                                    <Run Text="{Binding Entry.AfterTarget, Mode=OneWay}"/>
-                                    <LineBreak/>
-                                    <Run Text="   " />
-                                    <Run Text="{Binding Entry.NextLine, Mode=OneWay}" Foreground="#80000000" />
-                                </TextBlock>
+                                <StackPanel>
+                                    <TextBlock TextWrapping="Wrap" Foreground="Black" FontFamily="Courier New" FontSize="12">
+                                        <Run Text="   " />
+                                        <Run Text="{Binding Entry.DisplayPrevLine, Mode=OneWay}" Foreground="#80000000" />
+                                        <LineBreak/>
+                                        <Run Text=">> " FontWeight="Bold" Foreground="Red" />
+                                        <Run Text="{Binding Entry.DisplayBeforeTarget, Mode=OneWay}"/>
+                                        <Run Text="{Binding Entry.DisplayTargetContent, Mode=OneWay}" FontWeight="Bold" Foreground="Red" Background="LightYellow"/>
+                                        <Run Text="{Binding Entry.DisplayAfterTarget, Mode=OneWay}"/>
+                                        <LineBreak/>
+                                        <Run Text="   " />
+                                        <Run Text="{Binding Entry.DisplayNextLine, Mode=OneWay}" Foreground="#80000000" />
+                                    </TextBlock>
+                                    
+                                    <ToggleButton Style="{StaticResource MaterialDesignFlatToggleButton}"
+                                                  IsChecked="{Binding Entry.ShowFullText}"
+                                                  Visibility="{Binding Entry.IsTextTruncated, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                  HorizontalAlignment="Right"
+                                                  Margin="0,4,0,0">
+                                        <ToggleButton.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <md:PackIcon Kind="UnfoldMoreHorizontal" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Vollständigen Text anzeigen"/>
+                                            </StackPanel>
+                                        </ToggleButton.Content>
+                                        <md:ToggleButtonAssist.OnContent>
+                                            <StackPanel Orientation="Horizontal">
+                                                <md:PackIcon Kind="UnfoldLessHorizontal" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Text kürzen"/>
+                                            </StackPanel>
+                                        </md:ToggleButtonAssist.OnContent>
+                                    </ToggleButton>
+                                </StackPanel>
                             </Border>
                         </Grid>
                     </md:Card>

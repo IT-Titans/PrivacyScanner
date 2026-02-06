@@ -12,6 +12,48 @@ public class LogEntryViewModel : ViewModelBase
     private ScanWarningType _type;
     private SpaCyLabel? _spacyLabel;
     private string? _ruleName;
+    private bool _showFullText;
+    private const int MaxPreviewLength = 500;
+
+    public bool ShowFullText
+    {
+        get => _showFullText;
+        set
+        {
+            if (SetProperty(ref _showFullText, value))
+            {
+                RefreshAllTextProperties();
+            }
+        }
+    }
+
+    public bool IsTextTruncated => 
+        (SuspiciousContent?.PrevLine?.Length > MaxPreviewLength) ||
+        (SuspiciousContent?.HitLine?.Length > MaxPreviewLength) ||
+        (SuspiciousContent?.NextLine?.Length > MaxPreviewLength);
+
+    public string DisplayPrevLine => GetDisplayText(PrevLine);
+    public string DisplayNextLine => GetDisplayText(NextLine);
+    public string DisplayBeforeTarget => GetDisplayText(BeforeTarget);
+    public string DisplayTargetContent => GetDisplayText(TargetContent);
+    public string DisplayAfterTarget => GetDisplayText(AfterTarget);
+
+    private string GetDisplayText(string original)
+    {
+        if (ShowFullText || string.IsNullOrEmpty(original) || original.Length <= MaxPreviewLength)
+            return original;
+
+        return original.Substring(0, MaxPreviewLength) + "... [gekürzt]";
+    }
+
+    private void RefreshAllTextProperties()
+    {
+        OnPropertyChanged(nameof(DisplayPrevLine));
+        OnPropertyChanged(nameof(DisplayNextLine));
+        OnPropertyChanged(nameof(DisplayBeforeTarget));
+        OnPropertyChanged(nameof(DisplayTargetContent));
+        OnPropertyChanged(nameof(DisplayAfterTarget));
+    }
 
     public string FilePath
     {
@@ -33,6 +75,8 @@ public class LogEntryViewModel : ViewModelBase
             if (SetProperty(ref _suspiciousContent, value))
             {
                 RefreshParts();
+                OnPropertyChanged(nameof(IsTextTruncated));
+                RefreshAllTextProperties();
                 OnPropertyChanged(nameof(PrevLine));
                 OnPropertyChanged(nameof(HitLine));
                 OnPropertyChanged(nameof(NextLine));
@@ -52,6 +96,7 @@ public class LogEntryViewModel : ViewModelBase
             if (SetProperty(ref _position, value))
             {
                 RefreshParts();
+                RefreshAllTextProperties();
             }
         }
     }
@@ -64,6 +109,7 @@ public class LogEntryViewModel : ViewModelBase
             if (SetProperty(ref _end, value))
             {
                 RefreshParts();
+                RefreshAllTextProperties();
             }
         }
     }

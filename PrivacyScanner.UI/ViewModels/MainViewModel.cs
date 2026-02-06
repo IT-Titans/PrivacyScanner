@@ -587,15 +587,15 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             RegexWarningsCount += regexCount;
             SpacyWarningsCount += spacyCount;
 
-            UpdateTreeNodes(notification.ScanResultDto.FilePath.FullName, items);
+            UpdateTreeNodes(notification.ScanResultDto.FilePath.FullName, items.Count);
         }));
 
         return ValueTask.CompletedTask;
     }
 
-    private void UpdateTreeNodes(string filePath, List<LogEntryViewModel> warnings)
+    private void UpdateTreeNodes(string filePath, int warningCount)
     {
-        if (warnings.Count == 0) return;
+        if (warningCount == 0) return;
 
         var fileName = Path.GetFileName(filePath);
         var fileNode = _logTreeNodes.OfType<FileLogNodeViewModel>()
@@ -609,59 +609,113 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 FullPath = filePath,
                 WarningCount = 0
             };
+            fileNode.Expanded += OnFileNodeExpanded;
+            // Dummy-Kind hinzufügen, um das Aufklapp-Symbol zu erzwingen
+            fileNode.Children.Add(new LoadingLogNodeViewModel { Title = "Lade Details..." });
             _logTreeNodes.Add(fileNode);
         }
 
-        fileNode.WarningCount += warnings.Count;
+        fileNode.WarningCount += warningCount;
         fileNode.Title = $"{fileName} ({fileNode.WarningCount})";
+    }
 
+    private void OnFileNodeExpanded(FileLogNodeViewModel fileNode)
+    {
+        _ = LoadFileDetailsAsync(fileNode);
+    }
+
+    private async Task LoadFileDetailsAsync(FileLogNodeViewModel fileNode)
+    {
+        if (fileNode.IsLoaded || fileNode.IsLoading) return;
+
+        fileNode.IsLoading = true;
+        
+        try
+        {
+            var filePath = new FileInfo(fileNode.FullPath);
+            var warnings = new List<LogEntryViewModel>();
+
+            // Gezielter Scan
+            var regexRules = _allRegexRules
+                .Where(r => r.IsEnabled)
+                .Select(r => new RegexRuleDto { Rule = r.Rule, RuleId = r.RuleId, RuleName = r.RuleName, IsEnabled = r.IsEnabled })
+                .ToList();
+
+            var scanResult = await _mediator.Send(new ScanFileCommand
+            {
+                FilePath = filePath,
+                RegexRuleList = regexRules,
+                UseSpacy = IsSpacyEnabled
+            });
+
+            warnings.AddRange(scanResult.Warnings.Select(w => MapToViewModel(w, fileNode.FullPath)));
+
+            // UI aktualisieren
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                fileNode.Children.Clear();
+                BuildDetailNodes(fileNode, warnings);
+                fileNode.IsLoaded = true;
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fehler beim Laden der Details für {FilePath}", fileNode.FullPath);
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                fileNode.Children.Clear();
+                fileNode.Children.Add(new LoadingLogNodeViewModel { Title = "Fehler beim Laden" });
+            });
+        }
+        finally
+        {
+            fileNode.IsLoading = false;
+        }
+    }
+
+    private LogEntryViewModel MapToViewModel(ScanWarningDto warning, string filePath)
+    {
+        return new LogEntryViewModel
+        {
+            FilePath = filePath,
+            Line = warning.Line,
+            SuspiciousContent = warning.SuspiciousContent,
+            Position = warning.Start,
+            End = warning.End,
+            Type = warning.Type,
+            SpacyLabel = warning.SpacyLabel,
+            RuleName = warning.RuleName
+        };
+    }
+
+    private void BuildDetailNodes(FileLogNodeViewModel fileNode, List<LogEntryViewModel> warnings)
+    {
         foreach (var typeGroup in warnings.GroupBy(w => w.Type))
         {
             var typeTitle = typeGroup.Key == ScanWarningType.SpaCy ? "SpaCy" : "Regex/Rule";
-            var typeNode = fileNode.Children.OfType<TypeLogNodeViewModel>()
-                .FirstOrDefault(n => n.Type == typeGroup.Key);
-
-            if (typeNode == null)
+            var typeNode = new TypeLogNodeViewModel
             {
-                typeNode = new TypeLogNodeViewModel
-                {
-                    Title = typeTitle,
-                    Type = typeGroup.Key,
-                    WarningCount = 0
-                };
-                fileNode.Children.Add(typeNode);
-            }
-
-            typeNode.WarningCount += typeGroup.Count();
-            typeNode.Title = $"{typeTitle} ({typeNode.WarningCount})";
+                Title = $"{typeTitle} ({typeGroup.Count()})",
+                Type = typeGroup.Key,
+                WarningCount = typeGroup.Count(),
+                IsExpanded = true
+            };
+            fileNode.Children.Add(typeNode);
 
             foreach (var group in typeGroup.GroupBy(w => w.Type == ScanWarningType.SpaCy ? w.SpacyLabel?.ToString() ?? "Unknown" : w.RuleName ?? "Unknown"))
             {
-                var groupName = group.Key;
-                var groupNode = typeNode.Children.OfType<GroupLogNodeViewModel>()
-                    .FirstOrDefault(n => n.GroupName == groupName);
-
-                if (groupNode == null)
+                var groupNode = new GroupLogNodeViewModel
                 {
-                    groupNode = new GroupLogNodeViewModel
-                    {
-                        Title = groupName,
-                        GroupName = groupName,
-                        WarningCount = 0
-                    };
-                    typeNode.Children.Add(groupNode);
-                }
-
-                groupNode.WarningCount += group.Count();
-                groupNode.Title = $"{groupName} ({groupNode.WarningCount})";
+                    Title = $"{group.Key} ({group.Count()})",
+                    GroupName = group.Key,
+                    WarningCount = group.Count(),
+                    IsExpanded = true
+                };
+                typeNode.Children.Add(groupNode);
 
                 foreach (var warning in group)
                 {
-                    groupNode.Children.Add(new EntryLogNodeViewModel
-                    {
-                        Title = $"Zeile {warning.Line}: {warning.TargetContent}",
-                        Entry = warning
-                    });
+                    groupNode.Children.Add(new EntryLogNodeViewModel { Entry = warning });
                 }
             }
         }

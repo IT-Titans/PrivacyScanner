@@ -70,26 +70,14 @@ public class ProcessScanCommandHandler(
                 continue;
             }
 
-            var warnings = new List<ScanWarningDto>();
-
-            if (request.UseSpacy)
+            var scanResultDto = await mediator.Send(new ScanFileCommand
             {
-                var spaCyScanResult = await mediator.Send(
-                    new SpaCyScanCommand { FilePath = filePath },
-                    scanToken);
+                FilePath = filePath,
+                RegexRuleList = request.RegexRuleList,
+                UseSpacy = request.UseSpacy
+            }, scanToken);
 
-                warnings.AddRange(spaCyScanResult.Warnings);
-            }
-
-            if (request.RegexRuleList != null)
-            {
-                var regexScanResult = await mediator.Send(
-                    new RegexScanCommand { FilePath = filePath, RegexRuleList = request.RegexRuleList },
-                    scanToken);
-
-                warnings.AddRange(regexScanResult.Warnings
-                    .ToList());
-            }
+            var warnings = scanResultDto.Warnings;
 
             currentProgress = GetProgress(currentFileNumber, fileInfoQueryResult.FileCount);
 
@@ -114,12 +102,6 @@ public class ProcessScanCommandHandler(
 
             if (warnings.Count == 0)
                 continue;
-
-            var scanResultDto = new ScanResultDto
-            {
-                FilePath = filePath,
-                Warnings = warnings
-            };
 
             await mediator.Publish(
                 new FoundWarningEvent

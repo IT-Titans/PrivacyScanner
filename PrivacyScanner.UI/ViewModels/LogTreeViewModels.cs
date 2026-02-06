@@ -9,6 +9,9 @@ public abstract class LogTreeNodeViewModel : ViewModelBase
     private int _warningCount;
     private bool _isExpanded;
 
+    private bool _isLoaded;
+    private bool _isLoading;
+
     public string Title
     {
         get => _title;
@@ -24,15 +27,46 @@ public abstract class LogTreeNodeViewModel : ViewModelBase
     public bool IsExpanded
     {
         get => _isExpanded;
-        set => SetProperty(ref _isExpanded, value);
+        set
+        {
+            if (SetProperty(ref _isExpanded, value) && value)
+            {
+                OnExpanded();
+            }
+        }
+    }
+
+    public bool IsLoaded
+    {
+        get => _isLoaded;
+        set => SetProperty(ref _isLoaded, value);
+    }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
     }
 
     public ObservableCollection<LogTreeNodeViewModel> Children { get; } = new();
+
+    protected virtual void OnExpanded() { }
 }
+
+public class LoadingLogNodeViewModel : LogTreeNodeViewModel { }
 
 public class FileLogNodeViewModel : LogTreeNodeViewModel
 {
     public string FullPath { get; set; } = string.Empty;
+    public event Action<FileLogNodeViewModel>? Expanded;
+
+    protected override void OnExpanded()
+    {
+        if (!IsLoaded && !IsLoading)
+        {
+            Expanded?.Invoke(this);
+        }
+    }
 }
 
 public class TypeLogNodeViewModel : LogTreeNodeViewModel
