@@ -1,4 +1,5 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+﻿using System.Diagnostics;
+using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
@@ -19,6 +20,9 @@ public class ProcessScanCommandHandler(
         CancellationToken cancellationToken)
     {
         var scanToken = scannerStateService.Token;
+
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
 
         var fileInfoQueryResult = await mediator.Send(
             new GetAllFilePathsInDirectoryQuery
@@ -94,6 +98,9 @@ public class ProcessScanCommandHandler(
                 },
                 scanToken);
         }
+
+        stopwatch.Stop();
+        logger.LogInformation("Finished scan. Took '{ElapsedSeconds}' second(s)", stopwatch.Elapsed.TotalSeconds);
 
         return Unit.Value;
     }
