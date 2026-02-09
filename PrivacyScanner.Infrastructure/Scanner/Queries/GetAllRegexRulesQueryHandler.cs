@@ -11,8 +11,7 @@ public class GetAllRegexRulesQueryHandler : IRequestHandler<GetAllRegexRulesQuer
     public async ValueTask<GetAllRegexRulesQueryResult> Handle(GetAllRegexRulesQuery request, CancellationToken cancellationToken)
     {
         var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-        var path = Path.Combine(commonPath, "PrivacyScanner");
-        path = Path.Combine(path, "rules.json");
+        var path = Path.Combine(commonPath, "PrivacyScanner", "rules.json");
 
         var userRules = await LoadUserRulesAsync(path);
         var defaultRules = DefaultRegexRulesProvider.GetDefaultRules();
