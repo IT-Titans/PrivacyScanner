@@ -399,17 +399,33 @@
                 </DataTemplate>
 
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:TypeLogNodeViewModel}" ItemsSource="{Binding Children}">
-                    <StackPanel Orientation="Horizontal" Margin="2">
-                        <md:PackIcon Kind="ShieldSearch" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                    </StackPanel>
+                    <Grid Margin="2">
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsLoading, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <md:PackIcon Kind="ShieldSearch" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
+                                         Value="0" IsIndeterminate="True" 
+                                         Width="16" Height="16" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontWeight="SemiBold" FontStyle="Italic"/>
+                        </StackPanel>
+                    </Grid>
                 </HierarchicalDataTemplate>
 
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:GroupLogNodeViewModel}" ItemsSource="{Binding Children}">
-                    <StackPanel Orientation="Horizontal" Margin="2">
-                        <md:PackIcon Kind="AlertCircleOutline" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
-                    </StackPanel>
+                    <Grid Margin="2">
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsLoading, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <md:PackIcon Kind="AlertCircleOutline" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
+                                         Value="0" IsIndeterminate="True" 
+                                         Width="16" Height="16" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontStyle="Italic"/>
+                        </StackPanel>
+                    </Grid>
                 </HierarchicalDataTemplate>
 
                 <DataTemplate DataType="{x:Type viewModels:EntryLogNodeViewModel}">
@@ -462,25 +478,6 @@
                                         <Run Text="   " />
                                         <Run Text="{Binding Entry.DisplayNextLine, Mode=OneWay}" Foreground="#80000000" />
                                     </TextBlock>
-                                    
-                                    <ToggleButton Style="{StaticResource MaterialDesignFlatToggleButton}"
-                                                  IsChecked="{Binding Entry.ShowFullText}"
-                                                  Visibility="{Binding Entry.IsTextTruncated, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                  HorizontalAlignment="Right"
-                                                  Margin="0,4,0,0">
-                                        <ToggleButton.Content>
-                                            <StackPanel Orientation="Horizontal">
-                                                <md:PackIcon Kind="UnfoldMoreHorizontal" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Vollständigen Text anzeigen"/>
-                                            </StackPanel>
-                                        </ToggleButton.Content>
-                                        <md:ToggleButtonAssist.OnContent>
-                                            <StackPanel Orientation="Horizontal">
-                                                <md:PackIcon Kind="UnfoldLessHorizontal" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Text kürzen"/>
-                                            </StackPanel>
-                                        </md:ToggleButtonAssist.OnContent>
-                                    </ToggleButton>
                                 </StackPanel>
                             </Border>
                         </Grid>

@@ -72,11 +72,31 @@ public class FileLogNodeViewModel : LogTreeNodeViewModel
 public class TypeLogNodeViewModel : LogTreeNodeViewModel
 {
     public ScanWarningType Type { get; set; }
+    public List<LogEntryViewModel> Warnings { get; set; } = new();
+    public event Action<TypeLogNodeViewModel>? Expanded;
+
+    protected override void OnExpanded()
+    {
+        if (!IsLoaded && !IsLoading)
+        {
+            Expanded?.Invoke(this);
+        }
+    }
 }
 
 public class GroupLogNodeViewModel : LogTreeNodeViewModel
 {
     public string GroupName { get; set; } = string.Empty;
+    public List<LogEntryViewModel> Warnings { get; set; } = new();
+    public event Action<GroupLogNodeViewModel>? Expanded;
+
+    protected override void OnExpanded()
+    {
+        if (!IsLoaded && !IsLoading)
+        {
+            Expanded?.Invoke(this);
+        }
+    }
 }
 
 public class EntryLogNodeViewModel : LogTreeNodeViewModel

@@ -56,16 +56,7 @@ public class ProcessScanCommandHandler(
                         TotalFilesCount = fileInfoQueryResult.FileCount,
                         ProgressInPercent = currentProgress
                     }, scanToken);
-
-                if (currentProgress > lastPublishedProgress || currentFileNumber == fileInfoQueryResult.FileCount)
-                {
-                    await mediator.Publish(
-                        new FileScannedEvent
-                        {
-                            ProgressInPercent = currentProgress,
-                        }, scanToken);
-                    lastPublishedProgress = currentProgress;
-                }
+                
 
                 continue;
             }
@@ -88,16 +79,6 @@ public class ProcessScanCommandHandler(
                     TotalFilesCount = fileInfoQueryResult.FileCount,
                     ProgressInPercent = currentProgress
                 }, scanToken);
-
-            if (currentProgress > lastPublishedProgress || currentFileNumber == fileInfoQueryResult.FileCount)
-            {
-                await mediator.Publish(
-                    new FileScannedEvent
-                    {
-                        ProgressInPercent = currentProgress,
-                    }, scanToken);
-                lastPublishedProgress = currentProgress;
-            }
 
 
             if (warnings.Count == 0)

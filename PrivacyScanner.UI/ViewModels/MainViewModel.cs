@@ -15,8 +15,9 @@ using ICommand = System.Windows.Input.ICommand;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
-public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEvent>, INotificationHandler<FileScannedEvent>, INotificationHandler<FileProcessedEvent>
+public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEvent>, INotificationHandler<FileProcessedEvent>
 {
+    private const int MaxWarningsPerRule = 10;
     private const int MaxLogEntries = 1000;
     private readonly ILogger<MainViewModel> _logger;
     private readonly IMediator _mediator;
@@ -767,39 +768,65 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 Title = $"{typeTitle} ({typeGroup.Count()})",
                 Type = typeGroup.Key,
                 WarningCount = typeGroup.Count(),
-                IsExpanded = true
+                Warnings = typeGroup.ToList()
             };
+            typeNode.Expanded += OnTypeNodeExpanded;
+            typeNode.Children.Add(new LoadingLogNodeViewModel { Title = "Lade Gruppen..." });
             fileNode.Children.Add(typeNode);
+        }
+    }
 
-            foreach (var group in typeGroup.GroupBy(w => w.Type == ScanWarningType.SpaCy ? w.SpacyLabel?.ToString() ?? "Unknown" : w.RuleName ?? "Unknown"))
+    private void OnTypeNodeExpanded(TypeLogNodeViewModel typeNode)
+    {
+        if (typeNode.IsLoaded || typeNode.IsLoading) return;
+        typeNode.IsLoading = true;
+
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            typeNode.Children.Clear();
+            foreach (var group in typeNode.Warnings.GroupBy(w => w.Type == ScanWarningType.SpaCy ? w.SpacyLabel?.ToString() ?? "Unknown" : w.RuleName ?? "Unknown"))
             {
                 var groupNode = new GroupLogNodeViewModel
                 {
                     Title = $"{group.Key} ({group.Count()})",
                     GroupName = group.Key,
                     WarningCount = group.Count(),
-                    IsExpanded = true
+                    Warnings = group.ToList()
                 };
+                groupNode.Expanded += OnGroupNodeExpanded;
+                groupNode.Children.Add(new LoadingLogNodeViewModel { Title = "Lade Einträge..." });
                 typeNode.Children.Add(groupNode);
-
-                foreach (var warning in group)
-                {
-                    groupNode.Children.Add(new EntryLogNodeViewModel { Entry = warning });
-                }
             }
-        }
+            typeNode.IsLoaded = true;
+            typeNode.IsLoading = false;
+        });
     }
 
-    public ValueTask Handle(FileScannedEvent notification, CancellationToken cancellationToken)
+    private void OnGroupNodeExpanded(GroupLogNodeViewModel groupNode)
     {
-        _logger.LogInformation($"new prgress{notification.ProgressInPercent}");
-        _logger.LogInformation($"File #{++pro_counter}");
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-        {
-            Progress = notification.ProgressInPercent;
-        }));
+        if (groupNode.IsLoaded || groupNode.IsLoading) return;
+        groupNode.IsLoading = true;
 
-        return ValueTask.CompletedTask;
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            groupNode.Children.Clear();
+            
+            // Begrenze auf 500 Einträge pro Kategorie
+            var limitedWarnings = groupNode.Warnings.Take(MaxWarningsPerRule).ToList();
+            
+            foreach (var warning in limitedWarnings)
+            {
+                groupNode.Children.Add(new EntryLogNodeViewModel { Entry = warning });
+            }
+
+            if (groupNode.Warnings.Count > MaxWarningsPerRule)
+            {
+                groupNode.Children.Add(new LoadingLogNodeViewModel { Title = $"... und {groupNode.Warnings.Count - MaxWarningsPerRule} weitere (begrenzt auf {MaxWarningsPerRule})" });
+            }
+
+            groupNode.IsLoaded = true;
+            groupNode.IsLoading = false;
+        });
     }
 
     public ValueTask Handle(FileProcessedEvent notification, CancellationToken cancellationToken)
