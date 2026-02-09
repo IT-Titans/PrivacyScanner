@@ -15,13 +15,8 @@ public static class DefaultRegexRulesProvider
     {
         return
         [
-            // E-Mail-Adresse
-            new RegexRuleDto
-            {
-                RuleId = new Guid("00000001-0000-0000-0000-000000000001"),
-                RuleName = "E-Mail-Adresse",
-                Rule = @"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
-            },
+            // todo: use factory methods for all pre-defined regex rules
+            GetEmailRegexRule(),
 
             // IBAN
             new RegexRuleDto
@@ -79,6 +74,16 @@ public static class DefaultRegexRulesProvider
                 Rule = @"\b[A-ZÄÖÜa-zäöüß]+(?:\s[A-ZÄÖÜa-zäöüß]+)*\s\d{1,4}[a-zA-Z]?\b"
             }
         ];
+    }
+
+    internal static RegexRuleDto GetEmailRegexRule()
+    {
+        return new RegexRuleDto
+        {
+            RuleId = new Guid("00000001-0000-0000-0000-000000000001"),
+            RuleName = "E-Mail-Adresse",
+            Rule = @"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+        };
     }
 
     /// <summary>

@@ -3,6 +3,11 @@
         <RootNamespace>ITTitans.PrivacyScanner.Infrastructure</RootNamespace>
         <AssemblyName>$(RootNamespace)</AssemblyName>
     </PropertyGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>ITTitans.PrivacyScanner.Infrastructure.Tests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
     <ItemGroup>
         <PackageReference Include="Mediator.Abstractions" />
         <PackageReference Include="Serilog" />
