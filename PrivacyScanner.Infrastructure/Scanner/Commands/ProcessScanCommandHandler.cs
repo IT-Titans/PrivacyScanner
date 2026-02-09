@@ -38,7 +38,10 @@ public class ProcessScanCommandHandler(
                 break;
             }
 
-            logger.LogInformation("Processing {FilePath}", filePath);
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Processing {FilePath}", filePath);
+            }
 
             currentFileNumber++;
 

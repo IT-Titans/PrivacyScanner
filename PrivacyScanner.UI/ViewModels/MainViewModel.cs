@@ -591,7 +591,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     public ValueTask Handle(FoundWarningEvent notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"File #{++counter}");
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug($"File #{++counter}");
+        }
 
         // Elemente außerhalb des UI-Threads vorbereiten
         var items = notification.ScanResultDto.Warnings.Select(warning => new LogEntryViewModel
