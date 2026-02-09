@@ -35,7 +35,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private ObservableCollection<LogTreeNodeViewModel> _logTreeNodes = new();
     private ObservableCollection<LogTreeNodeViewModel> _pagedLogTreeNodes = new();
     private int _currentPage = 1;
-    private int _pageSize = 500;
+    private int _pageSize = 100;
     private int _totalPages = 1;
     private bool _isScanning;
     private string _statusText = "Bereit";
