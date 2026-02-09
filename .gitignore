@@ -3,3 +3,4 @@ bin
 .idea
 appsettings.Development.json
 *.sln.DotSettings.user
+.vs
