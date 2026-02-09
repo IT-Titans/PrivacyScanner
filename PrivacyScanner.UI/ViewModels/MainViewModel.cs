@@ -33,7 +33,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private ObservableCollection<RegexRule> _filteredRegexRules = new();
     private BulkObservableCollection<LogEntryViewModel> _logEntries = new();
     private ObservableCollection<LogTreeNodeViewModel> _logTreeNodes = new();
-    private ObservableCollection<LogTreeNodeViewModel> _pagedLogTreeNodes = new();
+    private BulkObservableCollection<LogTreeNodeViewModel> _pagedLogTreeNodes = new();
     private int _currentPage = 1;
     private int _pageSize = 100;
     private int _totalPages = 1;
@@ -282,6 +282,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         {
             if (SetProperty(ref _currentPage, value))
             {
+                _pagedLogTreeNodes.Clear();
                 UpdatePagedLogTreeNodes();
                 ((RelayCommand)NextPageCommand).RaiseCanExecuteChanged();
                 ((RelayCommand)PreviousPageCommand).RaiseCanExecuteChanged();
@@ -677,15 +678,12 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         var pagedItems = _logTreeNodes
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize)
+            .Where(item => !_pagedLogTreeNodes.Contains(item))
             .ToList();
 
-        _pagedLogTreeNodes.Clear();
-        foreach (var item in pagedItems)
-        {
-            _pagedLogTreeNodes.Add(item);
-        }
-        
-        OnPropertyChanged(nameof(PagedLogTreeNodes));
+        if (pagedItems.Count == 0) return;
+
+        _pagedLogTreeNodes.AddRange(pagedItems);
     }
 
     private void OnFileNodeExpanded(FileLogNodeViewModel fileNode)
