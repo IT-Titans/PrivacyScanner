@@ -272,7 +272,6 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     public ObservableCollection<RegexRule> FilteredRegexRules => _filteredRegexRules;
     public BulkObservableCollection<LogEntryViewModel> LogEntries => _logEntries;
-    public ObservableCollection<LogTreeNodeViewModel> LogTreeNodes => _logTreeNodes;
 
     public ObservableCollection<LogTreeNodeViewModel> PagedLogTreeNodes => _pagedLogTreeNodes;
 
