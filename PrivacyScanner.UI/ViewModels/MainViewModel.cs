@@ -32,6 +32,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private ObservableCollection<RegexRule> _filteredRegexRules = new();
     private BulkObservableCollection<LogEntryViewModel> _logEntries = new();
     private ObservableCollection<LogTreeNodeViewModel> _logTreeNodes = new();
+    private ObservableCollection<LogTreeNodeViewModel> _pagedLogTreeNodes = new();
+    private int _currentPage = 1;
+    private int _pageSize = 500;
+    private int _totalPages = 1;
     private bool _isScanning;
     private string _statusText = "Bereit";
     private int counter = 0;
@@ -61,6 +65,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         OpenSettingsCommand = new RelayCommand(_ => OnOpenSettings(), _ => !IsScanning);
         AddNewRegexCommand = new RelayCommand(_ => OnAddNewRegex(), _ => !IsScanning);
         OpenFileCommand = new RelayCommand<string>(path => OnOpenFile(path));
+        NextPageCommand = new RelayCommand(_ => CurrentPage++, _ => CurrentPage < TotalPages);
+        PreviousPageCommand = new RelayCommand(_ => CurrentPage--, _ => CurrentPage > 1);
 
         UpdateFilteredRegexRules();
     }
@@ -267,6 +273,41 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     public BulkObservableCollection<LogEntryViewModel> LogEntries => _logEntries;
     public ObservableCollection<LogTreeNodeViewModel> LogTreeNodes => _logTreeNodes;
 
+    public ObservableCollection<LogTreeNodeViewModel> PagedLogTreeNodes => _pagedLogTreeNodes;
+
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                UpdatePagedLogTreeNodes();
+                ((RelayCommand)NextPageCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)PreviousPageCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public int TotalPages
+    {
+        get => _totalPages;
+        private set => SetProperty(ref _totalPages, value);
+    }
+
+    public int PageSize
+    {
+        get => _pageSize;
+        set
+        {
+            if (SetProperty(ref _pageSize, value))
+            {
+                CurrentPage = 1;
+                UpdatePagedLogTreeNodes();
+            }
+        }
+    }
+
     public ICommand SelectPathCommand { get; }
     public ICommand SelectExportFileCommand { get; }
     public ICommand ClearExportFileCommand { get; }
@@ -277,6 +318,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     public ICommand ToggleRuleCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand AddNewRegexCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
 
     private void OnOpenFile(string? filePath)
     {
@@ -397,6 +440,9 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         RegexWarningsCount = 0;
         SpacyWarningsCount = 0;
         _logTreeNodes.Clear();
+        _pagedLogTreeNodes.Clear();
+        CurrentPage = 1;
+        TotalPages = 1;
         _wasScanCancelled = false;
         IsProgressIndeterminate = true;
 
@@ -588,6 +634,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             SpacyWarningsCount += spacyCount;
 
             UpdateTreeNodes(notification.ScanResultDto.FilePath.FullName, items.Count);
+            UpdatePagedLogTreeNodes();
         }));
 
         return ValueTask.CompletedTask;
@@ -616,7 +663,29 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         }
 
         fileNode.WarningCount += warningCount;
-        fileNode.Title = $"{fileName} ({fileNode.WarningCount})";
+        // Der erste TreeNode soll den vollständigen Dateipfad anzeigen
+        fileNode.Title = $"{filePath} ({fileNode.WarningCount})";
+    }
+
+    private void UpdatePagedLogTreeNodes()
+    {
+        TotalPages = Math.Max(1, (int)Math.Ceiling(_logTreeNodes.Count / (double)PageSize));
+        
+        if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+        if (CurrentPage < 1) CurrentPage = 1;
+
+        var pagedItems = _logTreeNodes
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+        _pagedLogTreeNodes.Clear();
+        foreach (var item in pagedItems)
+        {
+            _pagedLogTreeNodes.Add(item);
+        }
+        
+        OnPropertyChanged(nameof(PagedLogTreeNodes));
     }
 
     private void OnFileNodeExpanded(FileLogNodeViewModel fileNode)

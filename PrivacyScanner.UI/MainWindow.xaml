@@ -332,7 +332,47 @@
             </Grid>
         </Border>
         <Border Background="{StaticResource SecondaryColor}" Height="4" DockPanel.Dock="Top"/>
-        <TreeView ItemsSource="{Binding LogTreeNodes}"
+
+        <!-- Pagination Footer -->
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource FloatingColor}" Padding="8,4" BorderBrush="{StaticResource SecondaryColor}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Foreground="White" Opacity="0.7" Text="Einträge pro Seite: " VerticalAlignment="Center"/>
+                    <TextBlock Foreground="White" FontWeight="Bold" Text="{Binding PageSize}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Command="{Binding PreviousPageCommand}" 
+                            Style="{StaticResource MaterialDesignIconButton}" 
+                            Foreground="White"
+                            Width="32" Height="32" Padding="0">
+                        <md:PackIcon Kind="ChevronLeft" Width="24" Height="24"/>
+                    </Button>
+
+                    <TextBlock Margin="16,0" VerticalAlignment="Center" Foreground="White">
+                        <Run Text="Seite "/>
+                        <Run Text="{Binding CurrentPage}" FontWeight="Bold"/>
+                        <Run Text=" von "/>
+                        <Run Text="{Binding TotalPages, Mode=OneWay}" FontWeight="Bold"/>
+                    </TextBlock>
+
+                    <Button Command="{Binding NextPageCommand}" 
+                            Style="{StaticResource MaterialDesignIconButton}" 
+                            Foreground="White"
+                            Width="32" Height="32" Padding="0">
+                        <md:PackIcon Kind="ChevronRight" Width="24" Height="24"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TreeView ItemsSource="{Binding PagedLogTreeNodes}"
                   Background="{StaticResource FloatingColor}"
                   BorderThickness="0"
                   VirtualizingStackPanel.IsVirtualizing="True"
@@ -454,6 +494,7 @@
                 </Style>
             </TreeView.ItemContainerStyle>
         </TreeView>
+        
     </DockPanel>
 </md:Card>
 
