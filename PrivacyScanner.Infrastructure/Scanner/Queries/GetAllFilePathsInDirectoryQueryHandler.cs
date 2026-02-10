@@ -18,12 +18,26 @@ public class GetAllFilePathsInDirectoryQueryHandler(IFileSystem fileSystem)
             });
         }
 
-        // var files = fileSystem.GetFiles(request.RootDirectory.FullName, "*.*", SearchOption.AllDirectories)
-        //     .Where(file => !new[] { ".exe", ".docx", ".pdf", ".jpg" }.Any(endungen => file.Contains(endungen)))
-        //     .Select(path => new FileInfo(path))
-        //     .ToList();
+        var fileBlacklist = new string[]
+        {
+            ".dll",
+            ".exe",
+            ".g.cs"
+        };
 
-        var files = fileSystem.GetFiles(request.RootDirectory.FullName, "*.*", SearchOption.AllDirectories)
+        var directoryBlacklist = new string[]
+        {
+            "bin",
+            "obj",
+            ".git",
+            "node_modules",
+            ".nuxt",
+            ".idea"
+        };
+
+        var allPaths = fileSystem.GetFiles(request.RootDirectory.FullName, "*.*", SearchOption.AllDirectories);
+
+        var files = allPaths.Where(p => !IsBlacklistedFilePath(p, directoryBlacklist, fileBlacklist))
             .Select(path => new FileInfo(path))
             .ToList();
 
@@ -32,6 +46,27 @@ public class GetAllFilePathsInDirectoryQueryHandler(IFileSystem fileSystem)
             FileCount = files.Count,
             FilePaths = files
         });
+    }
+
+    private static bool IsBlacklistedFilePath(string path, string[] directoryBlacklist, string[] fileBlacklist)
+    {
+        foreach (var blacklistedDirectory in directoryBlacklist)
+        {
+            if (path.IndexOf($"{Path.DirectorySeparatorChar}{blacklistedDirectory}{Path.DirectorySeparatorChar}", StringComparison.InvariantCultureIgnoreCase) != -1)
+            {
+                return true;
+            }
+        }
+
+        foreach (var blacklistedFileExtension in fileBlacklist)
+        {
+            if (Path.GetExtension(path).Equals(blacklistedFileExtension, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static bool IsBinaryFile(string filePath)
