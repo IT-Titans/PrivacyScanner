@@ -1,7 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
 using ITTitans.PrivacyScanner.Model;
@@ -11,6 +8,9 @@ using ITTitans.PrivacyScanner.UI.Services;
 using Mediator;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using ICommand = System.Windows.Input.ICommand;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
@@ -65,6 +65,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         ToggleRuleCommand = new RelayCommand<RegexRule>(rule => OnToggleRule(rule), _ => !IsScanning);
         OpenSettingsCommand = new RelayCommand(_ => OnOpenSettings(), _ => !IsScanning);
         AddNewRegexCommand = new RelayCommand(_ => OnAddNewRegex(), _ => !IsScanning);
+        AddNewDirectoryBacklistItemCommand = new RelayCommand(_ => OnAddNewDirectoryBlacklistItem(), _ => !IsScanning);
+        RemoveSelectedDirectoryBacklistItemCommand = new RelayCommand(_ => OnRemoveSelectedDirectoryBlacklistItem(), _ => !IsScanning && DirectoryBlacklistItems.Count > 0 && SelectedDirectoryBlacklistItem >= 0);
+        AddNewFileExtensionBacklistItemCommand = new RelayCommand(_ => OnAddNewFileExtensionBlacklistItem(), _ => !IsScanning);
+        RemoveSelectedFileExtensionBacklistItemCommand = new RelayCommand(_ => OnRemoveSelectedFileExtensionBlacklistItem(), _ => !IsScanning && FileExtensionBlacklistItems.Count > 0 && SelectedFileExtensionBlacklistItem >= 0);
         OpenFileCommand = new RelayCommand<string>(path => OnOpenFile(path));
         NextPageCommand = new RelayCommand(_ => CurrentPage++, _ => CurrentPage < TotalPages);
         PreviousPageCommand = new RelayCommand(_ => CurrentPage--, _ => CurrentPage > 1);
@@ -140,6 +144,22 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 }
             }
         }
+    }
+
+    public BulkObservableCollection<DirectoryBlacklistItemViewModel> DirectoryBlacklistItems { get; set; } = new();
+
+    public BulkObservableCollection<FileExtensionBlacklistItemViewModel> FileExtensionBlacklistItems { get; set; } = new();
+
+    public int SelectedDirectoryBlacklistItem
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
+    public int SelectedFileExtensionBlacklistItem
+    {
+        get;
+        set => SetProperty(ref field, value);
     }
 
     private async Task ConfirmSpacyActivationAsync()
@@ -319,6 +339,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     public ICommand ToggleRuleCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand AddNewRegexCommand { get; }
+    public ICommand AddNewDirectoryBacklistItemCommand { get; }
+    public ICommand RemoveSelectedDirectoryBacklistItemCommand { get; }
+    public ICommand AddNewFileExtensionBacklistItemCommand { get; }
+    public ICommand RemoveSelectedFileExtensionBacklistItemCommand { get; }
     public ICommand NextPageCommand { get; }
     public ICommand PreviousPageCommand { get; }
 
@@ -468,6 +492,14 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 {
                     RootDirectory = rootDirectory,
                     RegexRuleList = regexRuleDtoList,
+                    DirectoryBlacklistItems = DirectoryBlacklistItems.Select(i => new DirectoryBlacklistItemDto()
+                    {
+                        DirectoryName = i.DirectoryName,
+                    }).ToList(),
+                    FileExtensionBlacklistItems = FileExtensionBlacklistItems.Select(i => new FileExtensionBlacklistItemDto()
+                    {
+                        Extension = i.Extension,
+                    }).ToList(),
                     UseSpacy = IsSpacyEnabled
                 });
             }
@@ -557,6 +589,100 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         // Nach dem Schließen des Dialogs laden wir die Regeln neu, 
         // um sicherzustellen, dass die Haupt-UI aktuell ist.
         await LoadRegexRulesAsync();
+    }
+
+    private async void OnAddNewDirectoryBlacklistItem()
+    {
+        var dialogViewModel = new AddDirectoryBlacklistItemDialogViewModel(_mediator);
+        var dialog = new Controls.AddDirectoryBlacklistItemDialog()
+        {
+            DataContext = dialogViewModel
+        };
+
+        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+
+        var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+
+        await LoadBlacklistItemsAsync();
+
+        SelectedDirectoryBlacklistItem = DirectoryBlacklistItems.Count - 1;
+    }
+
+    private async void OnRemoveSelectedDirectoryBlacklistItem()
+    {
+        if (DirectoryBlacklistItems.Count == 0 ||
+            SelectedDirectoryBlacklistItem >= DirectoryBlacklistItems.Count ||
+            SelectedDirectoryBlacklistItem < 0)
+        {
+            return;
+        }
+
+        DirectoryBlacklistItems.RemoveAt(SelectedDirectoryBlacklistItem);
+
+        await SaveDirectoryBlacklistItemsStatesAsync();
+    }
+
+    private async void OnAddNewFileExtensionBlacklistItem()
+    {
+        var dialogViewModel = new AddFileExtensionBlacklistItemDialogViewModel(_mediator);
+        var dialog = new Controls.AddFileExtensionBlacklistItemDialog()
+        {
+            DataContext = dialogViewModel
+        };
+
+        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+
+        var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+
+        await LoadBlacklistItemsAsync();
+
+        SelectedFileExtensionBlacklistItem = FileExtensionBlacklistItems.Count - 1;
+    }
+
+    private async void OnRemoveSelectedFileExtensionBlacklistItem()
+    {
+        if (FileExtensionBlacklistItems.Count == 0 ||
+            SelectedFileExtensionBlacklistItem >= FileExtensionBlacklistItems.Count ||
+            SelectedFileExtensionBlacklistItem < 0)
+        {
+            return;
+        }
+
+        FileExtensionBlacklistItems.RemoveAt(SelectedFileExtensionBlacklistItem);
+
+        await SaveFileExtensionBlacklistItemsStatesAsync();
+    }
+
+    private async Task SaveDirectoryBlacklistItemsStatesAsync()
+    {
+        var directoryBlacklistItemDtos = DirectoryBlacklistItems
+            .Where(i => !string.IsNullOrWhiteSpace(i.DirectoryName))
+            .Select(i => new DirectoryBlacklistItemDto
+            {
+                DirectoryName = i.DirectoryName,
+            })
+            .ToList();
+
+        await _mediator.Send(new SaveDirectoryBlacklistItemsStatesCommand
+        {
+            DirectoryBlacklistItems = directoryBlacklistItemDtos,
+        });
+    }
+
+    private async Task SaveFileExtensionBlacklistItemsStatesAsync()
+    {
+        var fileExtensionBlacklistItemDtos = FileExtensionBlacklistItems
+            .Where(i => !string.IsNullOrWhiteSpace(i.Extension))
+            .Select(i => new FileExtensionBlacklistItemDto()
+            {
+                Extension = i.Extension,
+            })
+            .ToList();
+
+        await _mediator.Send(new SaveFileExtensionBlacklistItemsStatesCommand()
+        {
+            FileExtensionBlacklistItems = fileExtensionBlacklistItemDtos,
+        });
     }
 
     private async void OnAddNewRegex()
@@ -858,9 +984,9 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             _logger.LogWarning("SpaCy ist nicht verfügbar: {Message}", envCheck.UserMessage);
         }
 
+        await LoadBlacklistItemsAsync();
         await LoadRegexRulesAsync();
     }
-
 
     private async Task LoadRegexRulesAsync()
     {
@@ -877,6 +1003,26 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             });
         }
         UpdateFilteredRegexRules();
+        RaiseCanExecuteChanged();
+    }
+
+    private async Task LoadBlacklistItemsAsync()
+    {
+        var queryResult = await _mediator.Send(new GetAllBlacklistItemsQuery());
+
+        DirectoryBlacklistItems.Clear();
+        FileExtensionBlacklistItems.Clear();
+        
+        DirectoryBlacklistItems.AddRange(queryResult.DirectoryBlacklistItems.Select(i => new DirectoryBlacklistItemViewModel()
+        {
+            DirectoryName = i.DirectoryName,
+        }));
+
+        FileExtensionBlacklistItems.AddRange(queryResult.FileExtensionBlacklistItems.Select(i => new FileExtensionBlacklistItemViewModel()
+        {
+            Extension = i.Extension,
+        }));
+
         RaiseCanExecuteChanged();
     }
 }

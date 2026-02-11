@@ -27,7 +27,9 @@ public class ProcessScanCommandHandler(
         var fileInfoQueryResult = await mediator.Send(
             new GetAllFilePathsInDirectoryQuery
             {
-                RootDirectory = request.RootDirectory
+                RootDirectory = request.RootDirectory,
+                DirectoryBlacklistItems = request.DirectoryBlacklistItems,
+                FileExtensionBlacklistItems = request.FileExtensionBlacklistItems,
             },
             scanToken);
         var currentFileNumber = 0;

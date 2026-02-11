@@ -1,0 +1,66 @@
+﻿<UserControl x:Class="ITTitans.PrivacyScanner.UI.Controls.AddDirectoryBlacklistItemDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewModels="clr-namespace:ITTitans.PrivacyScanner.UI.ViewModels"
+             xmlns:converters="clr-namespace:ITTitans.PrivacyScanner.UI.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="400"
+             d:DataContext="{d:DesignInstance Type=viewModels:AddDirectoryBlacklistItemDialogViewModel}">
+    <UserControl.Resources>
+        <md:NullableToVisibilityConverter x:Key="NullableToVisibilityConverter" />
+        <converters:EmptyStringToHiddenVisibilityConverter x:Key="EmptyStringToHiddenVisibilityConverter" />
+    </UserControl.Resources>
+    <Grid Margin="24" MinWidth="400">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Neue Verzeichnis Blacklist Regel" 
+                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                   Margin="0,0,0,16"/>
+
+        <TextBox x:Name="RuleNameTextBox" Grid.Row="1" 
+                 Text="{Binding DirectoryName, UpdateSourceTrigger=PropertyChanged}"
+                 md:HintAssist.Hint="Verzeichnisname"
+                 Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                 Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="2" Text="{Binding ErrorMessage}" 
+                   Foreground="Red" 
+                   TextWrapping="Wrap"
+                   Visibility="{Binding ErrorMessage, Converter={StaticResource NullableToVisibilityConverter}}"
+                   Margin="0,0,0,16"/>
+
+        <TextBlock Grid.Row="3"
+                   Foreground="White" 
+                   VerticalAlignment="Center"
+                   Margin="0, 8"
+                   Visibility="{Binding DirectoryName, Converter={StaticResource EmptyStringToHiddenVisibilityConverter}}">
+            <Run Text="Schließt alle Ordner mit dem Namen "/>
+            <Run Text="{Binding DirectoryNamePreview, Mode=OneWay}" FontWeight="Bold"/>
+            <Run Text=" von der Suche aus"/>
+        </TextBlock>
+
+        <TextBlock Grid.Row="4" Foreground="White" VerticalAlignment="Center" Margin="0, 8">
+            Ingoriert Groß- und Kleinschreibung
+        </TextBlock>
+
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Command="{Binding CancelCommand}" 
+                    Content="Abbrechen" 
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Margin="0,0,8,0"/>
+            <Button Command="{Binding AddCommand}" 
+                    Content="Hinzufügen" 
+                    Style="{StaticResource MaterialDesignRaisedButton}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

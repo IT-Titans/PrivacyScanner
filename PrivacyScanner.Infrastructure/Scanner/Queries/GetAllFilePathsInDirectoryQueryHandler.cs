@@ -18,22 +18,8 @@ public class GetAllFilePathsInDirectoryQueryHandler(IFileSystem fileSystem)
             });
         }
 
-        var fileBlacklist = new string[]
-        {
-            ".dll",
-            ".exe",
-            ".g.cs"
-        };
-
-        var directoryBlacklist = new string[]
-        {
-            "bin",
-            "obj",
-            ".git",
-            "node_modules",
-            ".nuxt",
-            ".idea"
-        };
+        var fileBlacklist = request.FileExtensionBlacklistItems.Select(i => i.Extension).ToArray();
+        var directoryBlacklist = request.DirectoryBlacklistItems.Select(i => i.DirectoryName).ToArray();
 
         var allPaths = fileSystem.GetFiles(request.RootDirectory.FullName, "*.*", SearchOption.AllDirectories);
 
