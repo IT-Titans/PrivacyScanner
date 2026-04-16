@@ -2,11 +2,10 @@
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
-using Microsoft.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
-public class AddFileExtensionBlacklistItemCommandHandler(IMediator mediator, ILogger<AddFileExtensionBlacklistItemCommand> logger) : IRequestHandler<AddFileExtensionBlacklistItemCommand>
+public class AddFileExtensionBlacklistItemCommandHandler(IMediator mediator) : IRequestHandler<AddFileExtensionBlacklistItemCommand>
 {
     public async ValueTask<Unit> Handle(AddFileExtensionBlacklistItemCommand request, CancellationToken cancellationToken)
     {

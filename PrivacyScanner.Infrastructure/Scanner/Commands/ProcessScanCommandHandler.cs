@@ -33,8 +33,6 @@ public class ProcessScanCommandHandler(
             },
             scanToken);
         var currentFileNumber = 0;
-        var lastPublishedProgress = -1;
-
 
         foreach (var filePath in fileInfoQueryResult.FilePaths)
         {
