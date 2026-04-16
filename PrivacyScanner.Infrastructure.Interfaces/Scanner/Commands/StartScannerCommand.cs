@@ -9,5 +9,9 @@ public class StartScannerCommand : IRequest
 
     public required List<RegexRuleDto>? RegexRuleList { get; init; }
 
+    public required List<DirectoryBlacklistItemDto> DirectoryBlacklistItems { get; init; }
+
+    public required List<FileExtensionBlacklistItemDto> FileExtensionBlacklistItems { get; init; }
+
     public bool UseSpacy { get; init; }
 }

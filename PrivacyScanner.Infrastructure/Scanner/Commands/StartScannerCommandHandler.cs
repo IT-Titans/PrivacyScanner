@@ -1,8 +1,6 @@
 ﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
-using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
 using Mediator;
-using Microsoft.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
@@ -17,6 +15,8 @@ public class StartScannerCommandHandler(IMediator mediator, IScannerStateService
         {
             RootDirectory = request.RootDirectory,
             RegexRuleList = request.RegexRuleList,
+            DirectoryBlacklistItems = request.DirectoryBlacklistItems,
+            FileExtensionBlacklistItems = request.FileExtensionBlacklistItems,
             UseSpacy = request.UseSpacy
         }, cancellationToken);
 

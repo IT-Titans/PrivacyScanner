@@ -1,7 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
 using ITTitans.PrivacyScanner.Model;
@@ -11,12 +8,16 @@ using ITTitans.PrivacyScanner.UI.Services;
 using Mediator;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using ICommand = System.Windows.Input.ICommand;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
-public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEvent>, INotificationHandler<FileScannedEvent>, INotificationHandler<FileProcessedEvent>
+public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEvent>, INotificationHandler<FileProcessedEvent>
 {
+    private const int MaxWarningsPerRule = 10;
     private const int MaxLogEntries = 1000;
     private readonly ILogger<MainViewModel> _logger;
     private readonly IMediator _mediator;
@@ -31,10 +32,14 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private ObservableCollection<RegexRule> _allRegexRules = new();
     private ObservableCollection<RegexRule> _filteredRegexRules = new();
     private BulkObservableCollection<LogEntryViewModel> _logEntries = new();
+    private ObservableCollection<LogTreeNodeViewModel> _logTreeNodes = new();
+    private BulkObservableCollection<LogTreeNodeViewModel> _pagedLogTreeNodes = new();
+    private int _currentPage = 1;
+    private int _pageSize = 100;
+    private int _totalPages = 1;
     private bool _isScanning;
     private string _statusText = "Bereit";
-    private int counter = 0;
-    private int pro_counter = 0;
+    private int _counter = 0;
     private int _totalWarningsCount;
     private int _regexWarningsCount;
     private int _spacyWarningsCount;
@@ -59,7 +64,13 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         ToggleRuleCommand = new RelayCommand<RegexRule>(rule => OnToggleRule(rule), _ => !IsScanning);
         OpenSettingsCommand = new RelayCommand(_ => OnOpenSettings(), _ => !IsScanning);
         AddNewRegexCommand = new RelayCommand(_ => OnAddNewRegex(), _ => !IsScanning);
+        AddNewDirectoryBacklistItemCommand = new RelayCommand(_ => OnAddNewDirectoryBlacklistItem(), _ => !IsScanning);
+        RemoveSelectedDirectoryBacklistItemCommand = new RelayCommand(_ => OnRemoveSelectedDirectoryBlacklistItem(), _ => !IsScanning && DirectoryBlacklistItems.Count > 0 && SelectedDirectoryBlacklistItem >= 0);
+        AddNewFileExtensionBacklistItemCommand = new RelayCommand(_ => OnAddNewFileExtensionBlacklistItem(), _ => !IsScanning);
+        RemoveSelectedFileExtensionBacklistItemCommand = new RelayCommand(_ => OnRemoveSelectedFileExtensionBlacklistItem(), _ => !IsScanning && FileExtensionBlacklistItems.Count > 0 && SelectedFileExtensionBlacklistItem >= 0);
         OpenFileCommand = new RelayCommand<string>(path => OnOpenFile(path));
+        NextPageCommand = new RelayCommand(_ => CurrentPage++, _ => CurrentPage < TotalPages);
+        PreviousPageCommand = new RelayCommand(_ => CurrentPage--, _ => CurrentPage > 1);
 
         UpdateFilteredRegexRules();
     }
@@ -132,6 +143,22 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 }
             }
         }
+    }
+
+    public BulkObservableCollection<DirectoryBlacklistItemViewModel> DirectoryBlacklistItems { get; set; } = new();
+
+    public BulkObservableCollection<FileExtensionBlacklistItemViewModel> FileExtensionBlacklistItems { get; set; } = new();
+
+    public int SelectedDirectoryBlacklistItem
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
+    public int SelectedFileExtensionBlacklistItem
+    {
+        get;
+        set => SetProperty(ref field, value);
     }
 
     private async Task ConfirmSpacyActivationAsync()
@@ -265,6 +292,42 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     public ObservableCollection<RegexRule> FilteredRegexRules => _filteredRegexRules;
     public BulkObservableCollection<LogEntryViewModel> LogEntries => _logEntries;
 
+    public ObservableCollection<LogTreeNodeViewModel> PagedLogTreeNodes => _pagedLogTreeNodes;
+
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                _pagedLogTreeNodes.Clear();
+                UpdatePagedLogTreeNodes();
+                ((RelayCommand)NextPageCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)PreviousPageCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public int TotalPages
+    {
+        get => _totalPages;
+        private set => SetProperty(ref _totalPages, value);
+    }
+
+    public int PageSize
+    {
+        get => _pageSize;
+        set
+        {
+            if (SetProperty(ref _pageSize, value))
+            {
+                CurrentPage = 1;
+                UpdatePagedLogTreeNodes();
+            }
+        }
+    }
+
     public ICommand SelectPathCommand { get; }
     public ICommand SelectExportFileCommand { get; }
     public ICommand ClearExportFileCommand { get; }
@@ -275,6 +338,12 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     public ICommand ToggleRuleCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand AddNewRegexCommand { get; }
+    public ICommand AddNewDirectoryBacklistItemCommand { get; }
+    public ICommand RemoveSelectedDirectoryBacklistItemCommand { get; }
+    public ICommand AddNewFileExtensionBacklistItemCommand { get; }
+    public ICommand RemoveSelectedFileExtensionBacklistItemCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
 
     private void OnOpenFile(string? filePath)
     {
@@ -389,11 +458,14 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         ScannedFilesCount = 0;
         TotalFilesCount = 0;
         LogEntries.Clear();
-        counter = 0;
-        pro_counter = 0;
+        _counter = 0;
         TotalWarningsCount = 0;
         RegexWarningsCount = 0;
         SpacyWarningsCount = 0;
+        _logTreeNodes.Clear();
+        _pagedLogTreeNodes.Clear();
+        CurrentPage = 1;
+        TotalPages = 1;
         _wasScanCancelled = false;
         IsProgressIndeterminate = true;
 
@@ -418,6 +490,14 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 {
                     RootDirectory = rootDirectory,
                     RegexRuleList = regexRuleDtoList,
+                    DirectoryBlacklistItems = DirectoryBlacklistItems.Select(i => new DirectoryBlacklistItemDto()
+                    {
+                        DirectoryName = i.DirectoryName,
+                    }).ToList(),
+                    FileExtensionBlacklistItems = FileExtensionBlacklistItems.Select(i => new FileExtensionBlacklistItemDto()
+                    {
+                        Extension = i.Extension,
+                    }).ToList(),
                     UseSpacy = IsSpacyEnabled
                 });
             }
@@ -455,8 +535,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 Progress = 100;
                 StatusText = "Scan abgeschlossen";
             }
-            counter = 0;
-            pro_counter = 0;
+            _counter = 0;
             OnPropertyChanged(nameof(ScanButtonText));
             OnPropertyChanged(nameof(ScanButtonIcon));
         });
@@ -509,6 +588,100 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         await LoadRegexRulesAsync();
     }
 
+    private async void OnAddNewDirectoryBlacklistItem()
+    {
+        var dialogViewModel = new AddDirectoryBlacklistItemDialogViewModel(_mediator);
+        var dialog = new Controls.AddDirectoryBlacklistItemDialog()
+        {
+            DataContext = dialogViewModel
+        };
+
+        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+
+        var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+
+        await LoadBlacklistItemsAsync();
+
+        SelectedDirectoryBlacklistItem = DirectoryBlacklistItems.Count - 1;
+    }
+
+    private async void OnRemoveSelectedDirectoryBlacklistItem()
+    {
+        if (DirectoryBlacklistItems.Count == 0 ||
+            SelectedDirectoryBlacklistItem >= DirectoryBlacklistItems.Count ||
+            SelectedDirectoryBlacklistItem < 0)
+        {
+            return;
+        }
+
+        DirectoryBlacklistItems.RemoveAt(SelectedDirectoryBlacklistItem);
+
+        await SaveDirectoryBlacklistItemsStatesAsync();
+    }
+
+    private async void OnAddNewFileExtensionBlacklistItem()
+    {
+        var dialogViewModel = new AddFileExtensionBlacklistItemDialogViewModel(_mediator);
+        var dialog = new Controls.AddFileExtensionBlacklistItemDialog()
+        {
+            DataContext = dialogViewModel
+        };
+
+        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+
+        var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+
+        await LoadBlacklistItemsAsync();
+
+        SelectedFileExtensionBlacklistItem = FileExtensionBlacklistItems.Count - 1;
+    }
+
+    private async void OnRemoveSelectedFileExtensionBlacklistItem()
+    {
+        if (FileExtensionBlacklistItems.Count == 0 ||
+            SelectedFileExtensionBlacklistItem >= FileExtensionBlacklistItems.Count ||
+            SelectedFileExtensionBlacklistItem < 0)
+        {
+            return;
+        }
+
+        FileExtensionBlacklistItems.RemoveAt(SelectedFileExtensionBlacklistItem);
+
+        await SaveFileExtensionBlacklistItemsStatesAsync();
+    }
+
+    private async Task SaveDirectoryBlacklistItemsStatesAsync()
+    {
+        var directoryBlacklistItemDtos = DirectoryBlacklistItems
+            .Where(i => !string.IsNullOrWhiteSpace(i.DirectoryName))
+            .Select(i => new DirectoryBlacklistItemDto
+            {
+                DirectoryName = i.DirectoryName,
+            })
+            .ToList();
+
+        await _mediator.Send(new SaveDirectoryBlacklistItemsStatesCommand
+        {
+            DirectoryBlacklistItems = directoryBlacklistItemDtos,
+        });
+    }
+
+    private async Task SaveFileExtensionBlacklistItemsStatesAsync()
+    {
+        var fileExtensionBlacklistItemDtos = FileExtensionBlacklistItems
+            .Where(i => !string.IsNullOrWhiteSpace(i.Extension))
+            .Select(i => new FileExtensionBlacklistItemDto()
+            {
+                Extension = i.Extension,
+            })
+            .ToList();
+
+        await _mediator.Send(new SaveFileExtensionBlacklistItemsStatesCommand()
+        {
+            FileExtensionBlacklistItems = fileExtensionBlacklistItemDtos,
+        });
+    }
+
     private async void OnAddNewRegex()
     {
         var dialogViewModel = new AddRegexDialogViewModel(_mediator);
@@ -541,7 +714,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     public ValueTask Handle(FoundWarningEvent notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"File #{++counter}");
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug($"File #{++_counter}");
+        }
 
         // Elemente außerhalb des UI-Threads vorbereiten
         var items = notification.ScanResultDto.Warnings.Select(warning => new LogEntryViewModel
@@ -579,25 +755,201 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         // Asynchron und im Batch an den Dispatcher übergeben, um UI-Last zu minimieren
         System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
         {
-            LogEntries.AddRange(items, MaxLogEntries);
+            // LogEntries.AddRange(items, MaxLogEntries);
             TotalWarningsCount += items.Count;
             RegexWarningsCount += regexCount;
             SpacyWarningsCount += spacyCount;
+
+            UpdateTreeNodes(notification.ScanResultDto.FilePath.FullName, items.Count);
+            UpdatePagedLogTreeNodes();
         }));
 
         return ValueTask.CompletedTask;
     }
 
-    public ValueTask Handle(FileScannedEvent notification, CancellationToken cancellationToken)
+    private void UpdateTreeNodes(string filePath, int warningCount)
     {
-        _logger.LogInformation($"new prgress{notification.ProgressInPercent}");
-        _logger.LogInformation($"File #{++pro_counter}");
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-        {
-            Progress = notification.ProgressInPercent;
-        }));
+        if (warningCount == 0) return;
 
-        return ValueTask.CompletedTask;
+        var fileName = Path.GetFileName(filePath);
+        var fileNode = _logTreeNodes.OfType<FileLogNodeViewModel>()
+            .FirstOrDefault(n => n.FullPath == filePath);
+
+        if (fileNode == null)
+        {
+            fileNode = new FileLogNodeViewModel
+            {
+                Title = fileName,
+                FullPath = filePath,
+                WarningCount = 0
+            };
+            fileNode.Expanded += OnFileNodeExpanded;
+            // Dummy-Kind hinzufügen, um das Aufklapp-Symbol zu erzwingen
+            fileNode.Children.Add(new LoadingLogNodeViewModel { Title = "Lade Details..." });
+            _logTreeNodes.Add(fileNode);
+        }
+
+        fileNode.WarningCount += warningCount;
+        // Der erste TreeNode soll den vollständigen Dateipfad anzeigen
+        fileNode.Title = $"{filePath} ({fileNode.WarningCount})";
+    }
+
+    private void UpdatePagedLogTreeNodes()
+    {
+        TotalPages = Math.Max(1, (int)Math.Ceiling(_logTreeNodes.Count / (double)PageSize));
+
+        if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+        if (CurrentPage < 1) CurrentPage = 1;
+
+        var pagedItems = _logTreeNodes
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .Where(item => !_pagedLogTreeNodes.Contains(item))
+            .ToList();
+
+        if (pagedItems.Count == 0) return;
+
+        _pagedLogTreeNodes.AddRange(pagedItems);
+    }
+
+    private void OnFileNodeExpanded(FileLogNodeViewModel fileNode)
+    {
+        _ = LoadFileDetailsAsync(fileNode);
+    }
+
+    private async Task LoadFileDetailsAsync(FileLogNodeViewModel fileNode)
+    {
+        if (fileNode.IsLoaded || fileNode.IsLoading) return;
+
+        fileNode.IsLoading = true;
+
+        try
+        {
+            var filePath = new FileInfo(fileNode.FullPath);
+            var warnings = new List<LogEntryViewModel>();
+
+            // Gezielter Scan
+            var regexRules = _allRegexRules
+                .Where(r => r.IsEnabled)
+                .Select(r => new RegexRuleDto { Rule = r.Rule, RuleId = r.RuleId, RuleName = r.RuleName, IsEnabled = r.IsEnabled })
+                .ToList();
+
+            var scanResult = await _mediator.Send(new ScanFileCommand
+            {
+                FilePath = filePath,
+                RegexRuleList = regexRules,
+                UseSpacy = IsSpacyEnabled
+            });
+
+            warnings.AddRange(scanResult.Warnings.Select(w => MapToViewModel(w, fileNode.FullPath)));
+
+            // UI aktualisieren
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                fileNode.Children.Clear();
+                BuildDetailNodes(fileNode, warnings);
+                fileNode.IsLoaded = true;
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fehler beim Laden der Details für {FilePath}", fileNode.FullPath);
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                fileNode.Children.Clear();
+                fileNode.Children.Add(new LoadingLogNodeViewModel { Title = "Fehler beim Laden" });
+            });
+        }
+        finally
+        {
+            fileNode.IsLoading = false;
+        }
+    }
+
+    private LogEntryViewModel MapToViewModel(ScanWarningDto warning, string filePath)
+    {
+        return new LogEntryViewModel
+        {
+            FilePath = filePath,
+            Line = warning.Line,
+            SuspiciousContent = warning.SuspiciousContent,
+            Position = warning.Start,
+            End = warning.End,
+            Type = warning.Type,
+            SpacyLabel = warning.SpacyLabel,
+            RuleName = warning.RuleName
+        };
+    }
+
+    private void BuildDetailNodes(FileLogNodeViewModel fileNode, List<LogEntryViewModel> warnings)
+    {
+        foreach (var typeGroup in warnings.GroupBy(w => w.Type))
+        {
+            var typeTitle = typeGroup.Key == ScanWarningType.SpaCy ? "SpaCy" : "Regex/Rule";
+            var typeNode = new TypeLogNodeViewModel
+            {
+                Title = $"{typeTitle} ({typeGroup.Count()})",
+                Type = typeGroup.Key,
+                WarningCount = typeGroup.Count(),
+                Warnings = typeGroup.ToList()
+            };
+            typeNode.Expanded += OnTypeNodeExpanded;
+            typeNode.Children.Add(new LoadingLogNodeViewModel { Title = "Lade Gruppen..." });
+            fileNode.Children.Add(typeNode);
+        }
+    }
+
+    private void OnTypeNodeExpanded(TypeLogNodeViewModel typeNode)
+    {
+        if (typeNode.IsLoaded || typeNode.IsLoading) return;
+        typeNode.IsLoading = true;
+
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            typeNode.Children.Clear();
+            foreach (var group in typeNode.Warnings.GroupBy(w => w.Type == ScanWarningType.SpaCy ? w.SpacyLabel?.ToString() ?? "Unknown" : w.RuleName ?? "Unknown"))
+            {
+                var groupNode = new GroupLogNodeViewModel
+                {
+                    Title = $"{group.Key} ({group.Count()})",
+                    GroupName = group.Key,
+                    WarningCount = group.Count(),
+                    Warnings = group.ToList()
+                };
+                groupNode.Expanded += OnGroupNodeExpanded;
+                groupNode.Children.Add(new LoadingLogNodeViewModel { Title = "Lade Einträge..." });
+                typeNode.Children.Add(groupNode);
+            }
+            typeNode.IsLoaded = true;
+            typeNode.IsLoading = false;
+        });
+    }
+
+    private void OnGroupNodeExpanded(GroupLogNodeViewModel groupNode)
+    {
+        if (groupNode.IsLoaded || groupNode.IsLoading) return;
+        groupNode.IsLoading = true;
+
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            groupNode.Children.Clear();
+
+            // Begrenze auf 500 Einträge pro Kategorie
+            var limitedWarnings = groupNode.Warnings.Take(MaxWarningsPerRule).ToList();
+
+            foreach (var warning in limitedWarnings)
+            {
+                groupNode.Children.Add(new EntryLogNodeViewModel { Entry = warning });
+            }
+
+            if (groupNode.Warnings.Count > MaxWarningsPerRule)
+            {
+                groupNode.Children.Add(new LoadingLogNodeViewModel { Title = $"... und {groupNode.Warnings.Count - MaxWarningsPerRule} weitere (begrenzt auf {MaxWarningsPerRule})" });
+            }
+
+            groupNode.IsLoaded = true;
+            groupNode.IsLoading = false;
+        });
     }
 
     public ValueTask Handle(FileProcessedEvent notification, CancellationToken cancellationToken)
@@ -629,9 +981,9 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             _logger.LogWarning("SpaCy ist nicht verfügbar: {Message}", envCheck.UserMessage);
         }
 
+        await LoadBlacklistItemsAsync();
         await LoadRegexRulesAsync();
     }
-
 
     private async Task LoadRegexRulesAsync()
     {
@@ -648,6 +1000,26 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             });
         }
         UpdateFilteredRegexRules();
+        RaiseCanExecuteChanged();
+    }
+
+    private async Task LoadBlacklistItemsAsync()
+    {
+        var queryResult = await _mediator.Send(new GetAllBlacklistItemsQuery());
+
+        DirectoryBlacklistItems.Clear();
+        FileExtensionBlacklistItems.Clear();
+
+        DirectoryBlacklistItems.AddRange(queryResult.DirectoryBlacklistItems.Select(i => new DirectoryBlacklistItemViewModel()
+        {
+            DirectoryName = i.DirectoryName,
+        }));
+
+        FileExtensionBlacklistItems.AddRange(queryResult.FileExtensionBlacklistItems.Select(i => new FileExtensionBlacklistItemViewModel()
+        {
+            Extension = i.Extension,
+        }));
+
         RaiseCanExecuteChanged();
     }
 }

@@ -1,4 +1,5 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+﻿using System.Diagnostics;
+using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
@@ -20,15 +21,18 @@ public class ProcessScanCommandHandler(
     {
         var scanToken = scannerStateService.Token;
 
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+
         var fileInfoQueryResult = await mediator.Send(
             new GetAllFilePathsInDirectoryQuery
             {
-                RootDirectory = request.RootDirectory
+                RootDirectory = request.RootDirectory,
+                DirectoryBlacklistItems = request.DirectoryBlacklistItems,
+                FileExtensionBlacklistItems = request.FileExtensionBlacklistItems,
             },
             scanToken);
         var currentFileNumber = 0;
-        var lastPublishedProgress = -1;
-
 
         foreach (var filePath in fileInfoQueryResult.FilePaths)
         {
@@ -38,7 +42,10 @@ public class ProcessScanCommandHandler(
                 break;
             }
 
-            logger.LogInformation("Processing {FilePath}", filePath);
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Processing {FilePath}", filePath);
+            }
 
             currentFileNumber++;
 
@@ -57,39 +64,18 @@ public class ProcessScanCommandHandler(
                         ProgressInPercent = currentProgress
                     }, scanToken);
 
-                if (currentProgress > lastPublishedProgress || currentFileNumber == fileInfoQueryResult.FileCount)
-                {
-                    await mediator.Publish(
-                        new FileScannedEvent
-                        {
-                            ProgressInPercent = currentProgress,
-                        }, scanToken);
-                    lastPublishedProgress = currentProgress;
-                }
 
                 continue;
             }
 
-            var warnings = new List<ScanWarningDto>();
-
-            if (request.UseSpacy)
+            var scanResultDto = await mediator.Send(new ScanFileCommand
             {
-                var spaCyScanResult = await mediator.Send(
-                    new SpaCyScanCommand { FilePath = filePath },
-                    scanToken);
+                FilePath = filePath,
+                RegexRuleList = request.RegexRuleList,
+                UseSpacy = request.UseSpacy
+            }, scanToken);
 
-                warnings.AddRange(spaCyScanResult.Warnings);
-            }
-
-            if (request.RegexRuleList != null)
-            {
-                var regexScanResult = await mediator.Send(
-                    new RegexScanCommand { FilePath = filePath, RegexRuleList = request.RegexRuleList },
-                    scanToken);
-
-                warnings.AddRange(regexScanResult.Warnings
-                    .ToList());
-            }
+            var warnings = scanResultDto.Warnings;
 
             currentProgress = GetProgress(currentFileNumber, fileInfoQueryResult.FileCount);
 
@@ -101,25 +87,9 @@ public class ProcessScanCommandHandler(
                     ProgressInPercent = currentProgress
                 }, scanToken);
 
-            if (currentProgress > lastPublishedProgress || currentFileNumber == fileInfoQueryResult.FileCount)
-            {
-                await mediator.Publish(
-                    new FileScannedEvent
-                    {
-                        ProgressInPercent = currentProgress,
-                    }, scanToken);
-                lastPublishedProgress = currentProgress;
-            }
-
 
             if (warnings.Count == 0)
                 continue;
-
-            var scanResultDto = new ScanResultDto
-            {
-                FilePath = filePath,
-                Warnings = warnings
-            };
 
             await mediator.Publish(
                 new FoundWarningEvent
@@ -128,6 +98,9 @@ public class ProcessScanCommandHandler(
                 },
                 scanToken);
         }
+
+        stopwatch.Stop();
+        logger.LogInformation("Finished scan. Took '{ElapsedSeconds}' second(s)", stopwatch.Elapsed.TotalSeconds);
 
         return Unit.Value;
     }
