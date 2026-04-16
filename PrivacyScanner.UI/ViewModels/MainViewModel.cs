@@ -39,8 +39,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private int _totalPages = 1;
     private bool _isScanning;
     private string _statusText = "Bereit";
-    private int counter = 0;
-    private int pro_counter = 0;
+    private int _counter = 0;
     private int _totalWarningsCount;
     private int _regexWarningsCount;
     private int _spacyWarningsCount;
@@ -459,8 +458,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         ScannedFilesCount = 0;
         TotalFilesCount = 0;
         LogEntries.Clear();
-        counter = 0;
-        pro_counter = 0;
+        _counter = 0;
         TotalWarningsCount = 0;
         RegexWarningsCount = 0;
         SpacyWarningsCount = 0;
@@ -537,8 +535,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 Progress = 100;
                 StatusText = "Scan abgeschlossen";
             }
-            counter = 0;
-            pro_counter = 0;
+            _counter = 0;
             OnPropertyChanged(nameof(ScanButtonText));
             OnPropertyChanged(nameof(ScanButtonIcon));
         });
@@ -719,7 +716,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     {
         if (_logger.IsEnabled(LogLevel.Debug))
         {
-            _logger.LogDebug($"File #{++counter}");
+            _logger.LogDebug($"File #{++_counter}");
         }
 
         // Elemente außerhalb des UI-Threads vorbereiten

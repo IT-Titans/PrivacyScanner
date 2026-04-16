@@ -19,7 +19,7 @@ public class AddFileExtensionBlacklistItemDialogViewModel : ViewModelBase
     {
         get;
         set => SetProperty(ref field, value.StartsWith('.') ? value : $".{value}");
-    }
+    } = string.Empty;
 
     public string? ErrorMessage
     {
