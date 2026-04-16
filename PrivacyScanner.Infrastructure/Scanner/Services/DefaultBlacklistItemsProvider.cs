@@ -6,7 +6,7 @@ public static class DefaultBlacklistItemsProvider
 {
     public static List<DirectoryBlacklistItemDto> GetDefaultDirectoryItems()
     {
-        return new []
+        return new[]
         {
             "bin",
             "obj",
@@ -24,7 +24,7 @@ public static class DefaultBlacklistItemsProvider
 
     public static List<FileExtensionBlacklistItemDto> GetDefaultFileExtensionItems()
     {
-        return new []
+        return new[]
             {
                 ".dll",
                 ".exe",

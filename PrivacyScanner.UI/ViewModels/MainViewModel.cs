@@ -800,7 +800,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private void UpdatePagedLogTreeNodes()
     {
         TotalPages = Math.Max(1, (int)Math.Ceiling(_logTreeNodes.Count / (double)PageSize));
-        
+
         if (CurrentPage > TotalPages) CurrentPage = TotalPages;
         if (CurrentPage < 1) CurrentPage = 1;
 
@@ -825,7 +825,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         if (fileNode.IsLoaded || fileNode.IsLoading) return;
 
         fileNode.IsLoading = true;
-        
+
         try
         {
             var filePath = new FileInfo(fileNode.FullPath);
@@ -936,10 +936,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
         {
             groupNode.Children.Clear();
-            
+
             // Begrenze auf 500 Einträge pro Kategorie
             var limitedWarnings = groupNode.Warnings.Take(MaxWarningsPerRule).ToList();
-            
+
             foreach (var warning in limitedWarnings)
             {
                 groupNode.Children.Add(new EntryLogNodeViewModel { Entry = warning });
@@ -1012,7 +1012,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
         DirectoryBlacklistItems.Clear();
         FileExtensionBlacklistItems.Clear();
-        
+
         DirectoryBlacklistItems.AddRange(queryResult.DirectoryBlacklistItems.Select(i => new DirectoryBlacklistItemViewModel()
         {
             DirectoryName = i.DirectoryName,

@@ -27,7 +27,7 @@ public class LogEntryViewModel : ViewModelBase
         }
     }
 
-    public bool IsTextTruncated => 
+    public bool IsTextTruncated =>
         (SuspiciousContent?.PrevLine?.Length > MaxPreviewLength) ||
         (SuspiciousContent?.HitLine?.Length > MaxPreviewLength) ||
         (SuspiciousContent?.NextLine?.Length > MaxPreviewLength);

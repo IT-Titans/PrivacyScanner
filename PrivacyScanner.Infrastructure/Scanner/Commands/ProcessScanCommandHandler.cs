@@ -65,7 +65,7 @@ public class ProcessScanCommandHandler(
                         TotalFilesCount = fileInfoQueryResult.FileCount,
                         ProgressInPercent = currentProgress
                     }, scanToken);
-                
+
 
                 continue;
             }
