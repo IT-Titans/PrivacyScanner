@@ -2,6 +2,9 @@ using System.Diagnostics;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Helpers;
 
+/// <summary>
+/// Runs an external process and captures its exit code, standard output, and standard error.
+/// </summary>
 public static class ProcessHelper
 {
     public static async Task<(int ExitCode, string Output, string Error)> RunCommandAsync(string fileName, string arguments)

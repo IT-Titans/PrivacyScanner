@@ -5,6 +5,9 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
+/// <summary>
+/// Checks whether Python 3.12, spaCy, and the German spaCy language model are correctly installed.
+/// </summary>
 public class CheckPythonAndSpacyEnvironmentQueryHandler(IProcessService processService)
     : IRequestHandler<CheckPythonAndSpacyEnvironmentQuery, CheckPythonAndSpacyEnvironmentQueryResult>
 {

@@ -6,6 +6,9 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
+/// <summary>
+/// Loads the directory and file extension blacklists from disk, falling back to the built-in defaults.
+/// </summary>
 public class GetAllBlacklistItemsQueryHandler : IRequestHandler<GetAllBlacklistItemsQuery, GetAllBlacklistItemsQueryResult>
 {
     public async ValueTask<GetAllBlacklistItemsQueryResult> Handle(GetAllBlacklistItemsQuery request, CancellationToken cancellationToken)

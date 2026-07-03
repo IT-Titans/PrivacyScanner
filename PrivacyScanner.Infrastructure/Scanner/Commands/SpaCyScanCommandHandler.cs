@@ -11,6 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Scans a file for named entities by running the bundled spaCy Python script as a subprocess.
+/// </summary>
 public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanResultDto>
 {
     private readonly IProcessService _processService;
@@ -18,8 +21,8 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
 
     public SpaCyScanCommandHandler(IProcessService processService, ILogger<SpaCyScanCommandHandler> logger)
     {
-        _processService = processService;
-        _logger = logger;
+        _processService = processService ?? throw new ArgumentNullException(nameof(processService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async ValueTask<ScanResultDto> Handle(SpaCyScanCommand request, CancellationToken cancellationToken)
@@ -28,17 +31,17 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
 
         try
         {
-            // Step 1: Prüfe Datei existiert
+            // Step 1: Check file exists
             if (!request.FilePath.Exists)
             {
                 return new ScanResultDto { FilePath = request.FilePath, Warnings = warnings };
             }
 
-            // Step 2: Alle Zeilen lesen
+            // Step 2: Read all lines
             var allLines = await File.ReadAllLinesAsync(request.FilePath.FullName, cancellationToken);
 
-            // Step 3: Pfad zum SpaCy-Skript abrufen
-            string scriptPath = await GetScriptPath(cancellationToken);
+            // Step 3: Get path to SpaCy script
+            string scriptPath = await GetScriptPathAsync(cancellationToken);
 
             var (exitCode, output, error) = await _processService.RunCommandAsync(
                 "py", $"-3.12 \"{scriptPath}\" \"{request.FilePath.FullName}\"");
@@ -48,7 +51,7 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
                 return new ScanResultDto { FilePath = request.FilePath, Warnings = warnings };
             }
 
-            // Step 4: JSON deserialisieren
+            // Step 4: Deserialize JSON
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             options.Converters.Add(new SpaCyLabelConverter());
 
@@ -59,7 +62,7 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
                 return new ScanResultDto { FilePath = request.FilePath, Warnings = warnings };
             }
 
-            // Step 5: Entities in Warnings umwandeln
+            // Step 5: Convert entities into warnings
 
             foreach (var entity in spacyResult.Entities)
             {
@@ -96,12 +99,12 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
     }
 
 
-    private async Task<string> GetScriptPath(CancellationToken cancellationToken)
+    private async Task<string> GetScriptPathAsync(CancellationToken cancellationToken)
     {
         var assembly = typeof(SpaCyScanCommandHandler).Assembly;
         var assemblyLocation = Path.GetDirectoryName(assembly.Location);
 
-        // Falls wir nicht im SingleFile-Modus sind, könnte die Datei im Resources-Ordner liegen
+        // If not running in single-file mode, the file might be in the Resources folder
         if (!string.IsNullOrEmpty(assemblyLocation))
         {
             var localPath = Path.Combine(assemblyLocation, "Resources", "spacy_scan.py");
@@ -109,12 +112,12 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
                 return localPath;
         }
 
-        // Sonst aus Embedded Resources extrahieren
+        // Otherwise extract from embedded resources
         var tempPath = Path.Combine(Path.GetTempPath(), "PrivacyScanner");
         Directory.CreateDirectory(tempPath);
         var scriptPath = Path.Combine(tempPath, "spacy_scan.py");
 
-        // Immer extrahieren, um sicherzustellen, dass wir die aktuellste Version haben
+        // Always extract to ensure we have the latest version
         const string resourceName = "ITTitans.PrivacyScanner.Infrastructure.Resources.spacy_scan.py";
         using var stream = assembly.GetManifestResourceStream(resourceName);
         if (stream == null)

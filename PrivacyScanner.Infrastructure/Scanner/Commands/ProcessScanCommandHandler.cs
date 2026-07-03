@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Enumerates the files in the target directory and scans each one, publishing progress and warning events as it goes.
+/// </summary>
 public class ProcessScanCommandHandler(
     IMediator mediator,
     IScannerStateService scannerStateService,

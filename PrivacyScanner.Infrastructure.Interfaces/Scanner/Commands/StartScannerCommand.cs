@@ -3,6 +3,7 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 
+/// <summary>Resets scanner state and starts a new directory scan.</summary>
 public class StartScannerCommand : IRequest
 {
     public required DirectoryInfo RootDirectory { get; init; }

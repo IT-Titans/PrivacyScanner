@@ -5,14 +5,17 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Backs the dialog for adding a directory name to the scan blacklist.</summary>
 public class AddDirectoryBlacklistItemDialogViewModel : ViewModelBase
 {
     private readonly IMediator _mediator;
 
     public AddDirectoryBlacklistItemDialogViewModel(IMediator mediator)
     {
+        ArgumentNullException.ThrowIfNull(mediator);
+
         _mediator = mediator;
-        AddCommand = new RelayCommand(async _ => await OnAdd(), _ => CanAdd());
+        AddCommand = new RelayCommand(async _ => await OnAddAsync(), _ => CanAdd());
         CancelCommand = new RelayCommand(_ => OnCancel());
     }
 
@@ -51,7 +54,7 @@ public class AddDirectoryBlacklistItemDialogViewModel : ViewModelBase
         return !string.IsNullOrWhiteSpace(DirectoryName);
     }
 
-    private async Task OnAdd()
+    private async Task OnAddAsync()
     {
         ErrorMessage = null;
         try

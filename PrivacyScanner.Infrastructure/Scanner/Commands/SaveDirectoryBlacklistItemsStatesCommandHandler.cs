@@ -4,6 +4,9 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Persists the directory blacklist to disk as JSON.
+/// </summary>
 public class SaveDirectoryBlacklistItemsStatesCommandHandler : IRequestHandler<SaveDirectoryBlacklistItemsStatesCommand>
 {
     public async ValueTask<Unit> Handle(SaveDirectoryBlacklistItemsStatesCommand request, CancellationToken cancellationToken)

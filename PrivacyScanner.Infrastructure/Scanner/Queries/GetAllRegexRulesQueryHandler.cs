@@ -6,6 +6,9 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
+/// <summary>
+/// Merges the built-in default regex rules with the user's saved rules, letting saved rules override defaults by <c>RuleId</c>.
+/// </summary>
 public class GetAllRegexRulesQueryHandler : IRequestHandler<GetAllRegexRulesQuery, GetAllRegexRulesQueryResult>
 {
     public async ValueTask<GetAllRegexRulesQueryResult> Handle(GetAllRegexRulesQuery request, CancellationToken cancellationToken)

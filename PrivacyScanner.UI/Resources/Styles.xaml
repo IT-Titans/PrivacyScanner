@@ -41,7 +41,7 @@
            TargetType="Button"
            BasedOn="{StaticResource MaterialDesignRaisedButton}">
 
-        <!-- Grundfarbe & Text -->
+        <!-- Base color & text -->
         <Setter Property="Background" Value="{StaticResource FloatingColor}" />
         <Setter Property="Foreground" Value="{StaticResource SecondaryColor}" />
         <Setter Property="BorderThickness" Value="0" />
@@ -51,7 +51,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="md:ButtonAssist.CornerRadius" Value="18" />
 
-        <!-- Hover / Pressed über Trigger -->
+        <!-- Hover / pressed via trigger -->
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="{StaticResource SecondaryColor}" />

@@ -4,6 +4,7 @@ using MaterialDesignThemes.Wpf;
 
 namespace ITTitans.PrivacyScanner.UI.Converters;
 
+/// <summary>Converts a bool (enabled state) to a minus/plus <see cref="PackIconKind"/> for toggling rules.</summary>
 public class BoolToIconConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -13,6 +14,7 @@ public class BoolToIconConverter : IValueConverter
             // Show minus when enabled (to disable), plus when disabled (to enable)
             return isEnabled ? PackIconKind.MinusCircle : PackIconKind.PlusCircle;
         }
+
         return PackIconKind.PlusCircle;
     }
 

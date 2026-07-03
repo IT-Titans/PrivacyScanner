@@ -1,5 +1,6 @@
 namespace ITTitans.PrivacyScanner.Model;
 
+/// <summary>A single detection hit: its location in the file, the matched content, and its source (regex rule or SpaCy label).</summary>
 public class ScanWarningDto
 {
     public required int Line { get; init; }

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Minimal <see cref="INotifyPropertyChanged"/> base class for all ViewModels.</summary>
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -16,6 +17,7 @@ public abstract class ViewModelBase : INotifyPropertyChanged
     {
         if (Equals(storage, value))
             return false;
+
         storage = value;
         OnPropertyChanged(propertyName);
         return true;

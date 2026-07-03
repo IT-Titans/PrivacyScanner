@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 
 namespace ITTitans.PrivacyScanner.UI.Models;
 
+/// <summary>An <see cref="ObservableCollection{T}"/> that can add many items and raise a single Reset notification.</summary>
 public class BulkObservableCollection<T> : ObservableCollection<T>
 {
     public void AddRange(IEnumerable<T> items, int? maxCount = null)

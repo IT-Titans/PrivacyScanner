@@ -15,7 +15,7 @@ public static class DefaultRegexRulesProvider
     {
         return
         [
-            // todo: use factory methods for all pre-defined regex rules
+            // Suggestion: use factory methods instead for all pre-defined regex rules instead of static definitions
             GetEmailRegexRule(),
 
             // IBAN
@@ -26,7 +26,7 @@ public static class DefaultRegexRulesProvider
                 Rule = @"\b[A-Z]{2}[0-9]{2}[ ]?[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{0,4}\b"
             },
 
-            // Telefonnummer (DE)
+            // Phone number (DE)
             new RegexRuleDto
             {
                 RuleId = new Guid("00000001-0000-0000-0000-000000000003"),
@@ -34,7 +34,7 @@ public static class DefaultRegexRulesProvider
                 Rule = @"(\+49[ -]?[1-9][0-9]{1,4}[ -]?[0-9]{3,12})|(\(?0[1-9][0-9]{1,4}\)?[ -]?[0-9]{3,12})"
             },
 
-            // Postleitzahl (DE)
+            // Postal code (DE)
             new RegexRuleDto
             {
                 RuleId = new Guid("00000001-0000-0000-0000-000000000004"),
@@ -42,7 +42,7 @@ public static class DefaultRegexRulesProvider
                 Rule = @"\b\d{5}\b"
             },
 
-            // Personalausweisnummer (DE)
+            // ID card number (DE)
             new RegexRuleDto
             {
                 RuleId = new Guid("00000001-0000-0000-0000-000000000005"),
@@ -50,7 +50,7 @@ public static class DefaultRegexRulesProvider
                 Rule = @"\b[A-Z0-9]{9}\b"
             },
 
-            // Kreditkartennummer (Visa, Mastercard, AMEX, Discover)
+            // Credit card number (Visa, Mastercard, AMEX, Discover)
             new RegexRuleDto
             {
                 RuleId = new Guid("00000001-0000-0000-0000-000000000006"),
@@ -58,7 +58,7 @@ public static class DefaultRegexRulesProvider
                 Rule = @"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b"
             },
 
-            // Datum (dd.mm.yyyy oder yyyy-mm-dd)
+            // Date (dd.mm.yyyy or yyyy-mm-dd)
             new RegexRuleDto
             {
                 RuleId = new Guid("00000001-0000-0000-0000-000000000007"),
@@ -66,7 +66,7 @@ public static class DefaultRegexRulesProvider
                 Rule = @"\b(0?[1-9]|[12][0-9]|3[01])[.\-/](0?[1-9]|1[0-2])[.\-/]\d{2,4}\b|\b(19|20)\d{2}-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])\b"
             },
 
-            // Adresse (vereinfachte DE-Straße + Hausnummer)
+            // Address (simplified DE street + house number)
             new RegexRuleDto
             {
                 RuleId = new Guid("00000001-0000-0000-0000-000000000008"),
@@ -84,13 +84,5 @@ public static class DefaultRegexRulesProvider
             RuleName = "E-Mail-Adresse",
             Rule = @"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
         };
-    }
-
-    /// <summary>
-    /// Checks if a rule ID belongs to a default rule.
-    /// </summary>
-    public static bool IsDefaultRule(Guid ruleId)
-    {
-        return GetDefaultRules().Any(r => r.RuleId == ruleId);
     }
 }

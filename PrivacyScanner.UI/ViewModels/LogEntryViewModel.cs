@@ -2,6 +2,7 @@ using ITTitans.PrivacyScanner.Model;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Presents a single scan finding (match location, context, rule/label) for display and CSV export.</summary>
 public class LogEntryViewModel : ViewModelBase
 {
     private string _filePath = string.Empty;

@@ -4,6 +4,7 @@ using Xunit;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Tests.Scanner.Services.DefaultRegexRules;
 
+/// <summary>Verifies the built-in email regex rule is enabled by default and matches/ignores expected input.</summary>
 public class EmailRegexRuleTests
 {
     private readonly RegexRuleDto _sut = DefaultRegexRulesProvider.GetEmailRegexRule();

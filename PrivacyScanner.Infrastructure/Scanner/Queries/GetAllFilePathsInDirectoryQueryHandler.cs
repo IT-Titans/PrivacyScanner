@@ -4,6 +4,9 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
+/// <summary>
+/// Enumerates all files under a root directory, excluding those matching the directory or file extension blacklist.
+/// </summary>
 public class GetAllFilePathsInDirectoryQueryHandler(IFileSystem fileSystem)
     : IRequestHandler<GetAllFilePathsInDirectoryQuery, GetAllFilePathsInDirectoryQueryResult>
 {
@@ -54,26 +57,4 @@ public class GetAllFilePathsInDirectoryQueryHandler(IFileSystem fileSystem)
 
         return false;
     }
-
-    public static bool IsBinaryFile(string filePath)
-    {
-        const int sampleSize = 8000;
-
-        byte[] buffer = new byte[sampleSize];
-
-        using var stream = File.OpenRead(filePath);
-        int bytesRead = stream.Read(buffer, 0, buffer.Length);
-
-        for (int i = 0; i < bytesRead; i++)
-        {
-            if (buffer[i] == 0)
-            {
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
 }

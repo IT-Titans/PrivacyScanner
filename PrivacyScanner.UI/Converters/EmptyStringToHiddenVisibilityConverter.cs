@@ -4,6 +4,7 @@ using System.Windows.Data;
 
 namespace ITTitans.PrivacyScanner.UI.Converters;
 
+/// <summary>Converts a string to <see cref="Visibility.Hidden"/> when null/empty/whitespace, otherwise <see cref="Visibility.Visible"/>.</summary>
 [ValueConversion(typeof(string), typeof(Visibility))]
 public class EmptyStringToHiddenVisibilityConverter : IValueConverter
 {

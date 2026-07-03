@@ -1,5 +1,6 @@
 namespace ITTitans.PrivacyScanner.Model;
 
+/// <summary>The matched text of a warning together with its surrounding line context.</summary>
 public class SuspiciousContentDto
 {
     public required string MatchText { get; init; }

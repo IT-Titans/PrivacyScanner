@@ -4,6 +4,9 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Persists the file extension blacklist to disk as JSON.
+/// </summary>
 public class SaveFileExtensionBlacklistItemsStatesCommandHandler : IRequestHandler<SaveFileExtensionBlacklistItemsStatesCommand>
 {
     public async ValueTask<Unit> Handle(SaveFileExtensionBlacklistItemsStatesCommand request, CancellationToken cancellationToken)

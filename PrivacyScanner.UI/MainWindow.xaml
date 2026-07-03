@@ -30,23 +30,23 @@
     <md:DialogHost Identifier="RootDialog">
         <Grid Margin="16">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- Pfadauswahl -->
+                <RowDefinition Height="Auto"/> <!-- Path selection -->
                 <RowDefinition Height="Auto"/> <!-- Blacklists -->
-                <RowDefinition Height="Auto"/> <!-- Regex Suche -->
-                <RowDefinition Height="Auto"/> <!-- Regex Regeln -->
-                <RowDefinition Height="Auto"/> <!-- Steuerung -->
+                <RowDefinition Height="Auto"/> <!-- Regex search -->
+                <RowDefinition Height="Auto"/> <!-- Regex rules -->
+                <RowDefinition Height="Auto"/> <!-- Controls -->
                 <RowDefinition Height="Auto"/> <!-- Progress -->
                 <RowDefinition Height="*"/>    <!-- Log -->
             </Grid.RowDefinitions>
 
-            <!-- Pfadauswahl -->
+            <!-- Path selection -->
             <Grid Grid.Row="0" Margin="0,0,0,8" IsEnabled="{Binding IsConfigurationEnabled}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
-                <!-- Scan-Ordner Auswahl -->
+                <!-- Scan folder selection -->
                 <Grid Grid.Row="0" Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -83,7 +83,7 @@
                     </Button>
                 </Grid>
                 
-                <!-- Export-Datei Auswahl (optional) -->
+                <!-- Export file selection (optional) -->
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -298,17 +298,17 @@
                 </Grid>
             </md:Card>
 
-            <!-- Regex-Suche -->
+            <!-- Regex search -->
 <Grid Grid.Row="2" Margin="0,8,0,8" IsEnabled="{Binding IsConfigurationEnabled}">
     <Grid.ColumnDefinitions>
-        <!-- Suchleiste halbe Breite der rechten Card -->
+        <!-- Search bar is half the width of the right card -->
         <ColumnDefinition Width="0.5*" />
         <!-- Buttons -->
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
 
-    <!-- Suchleiste mit Lupe und Hint -->
+    <!-- Search bar with magnifier icon and hint -->
     <md:ColorZone Grid.Column="0"
                   Background="{StaticResource FloatingColor}"
                   Mode="Standard"
@@ -322,12 +322,12 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Lupe links -->
+            <!-- Magnifier icon on the left -->
             <md:PackIcon Kind="Search"
                          VerticalAlignment="Center"
                          Margin="0,0,8,0" />
 
-            <!-- TextBox mit Hinweis -->
+            <!-- TextBox with hint text -->
             <TextBox Grid.Column="1"
                      Text="{Binding RegexSearchText, UpdateSourceTrigger=PropertyChanged}"
                      md:TextFieldAssist.DecorationVisibility="Hidden"
@@ -339,7 +339,7 @@
     </md:ColorZone>
 
 
-    <!-- Regel hinzufügen -->
+    <!-- Add rule -->
     <Button Grid.Column="1"
             Margin="8,0,0,0"
             Padding="12,0"
@@ -354,7 +354,7 @@
         </StackPanel>
     </Button>
 
-    <!-- Regeln bearbeiten -->
+    <!-- Edit rules -->
     <Button Grid.Column="2"
             Margin="8,0,0,0"
             Padding="12,0"
@@ -370,7 +370,7 @@
     </Button>
 </Grid>
 
-            <!-- Regex Regeln (gekachelt) -->
+            <!-- Regex rules (tiled) -->
             <md:Card Grid.Row="3" Padding="0" Margin="0,0,0,16" Background="{DynamicResource MaterialDesignPaper}" IsEnabled="{Binding IsConfigurationEnabled}">
                 <DockPanel>
                     <Border Background="{StaticResource FloatingColor}" Padding="8" DockPanel.Dock="Top">
@@ -417,7 +417,7 @@
                 </DockPanel>
             </md:Card>
 
-            <!-- Scan-Steuerung -->
+            <!-- Scan controls -->
             <StackPanel Grid.Row="4" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,0,0,16">
                 <CheckBox Content="{Binding SpacyCheckboxContent}"
                           IsChecked="{Binding IsSpacyEnabled, Mode=TwoWay}"
@@ -436,7 +436,7 @@
                 </Button>
             </StackPanel>
 
-            <!-- Fortschritt -->
+            <!-- Progress -->
             <StackPanel Grid.Row="5" Margin="0,0,0,16">
                 <Grid Margin="0,0,0,4">
                     <TextBlock Text="{Binding StatusText}" 
@@ -464,7 +464,7 @@
                 </Grid>
             </StackPanel>
 
-            <!-- Log-Bereich -->
+            <!-- Log area -->
             <md:Card Grid.Row="6" Padding="0" Background="{DynamicResource MaterialDesignPaper}">
     <DockPanel>
         <Border Background="{StaticResource FloatingColor}" Padding="8" DockPanel.Dock="Top">

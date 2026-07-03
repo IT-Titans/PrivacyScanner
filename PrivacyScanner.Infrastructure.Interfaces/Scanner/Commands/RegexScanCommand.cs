@@ -3,6 +3,7 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 
+/// <summary>Scans a single file against a set of regex rules.</summary>
 public class RegexScanCommand : IRequest<ScanResultDto>
 {
     public required FileInfo FilePath { get; init; }

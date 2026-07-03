@@ -2,6 +2,7 @@ using ITTitans.PrivacyScanner.UI.ViewModels;
 
 namespace ITTitans.PrivacyScanner.UI.Models;
 
+/// <summary>UI-bindable regex rule (name, pattern, enabled state) shown in the rule chips and settings dialog.</summary>
 public class RegexRule : ViewModelBase
 {
     private bool _isEnabled = true;

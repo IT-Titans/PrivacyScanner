@@ -2,7 +2,8 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 
-public class EditRegexRuleCommand : IRequest
+/// <summary>Partially updates an existing regex rule's name and/or pattern.</summary>
+public class EditRegexRuleCommand : IRequest<EditRegexRuleCommandResult>
 {
     public string? RuleName { get; init; }
     public string? Rule { get; init; }

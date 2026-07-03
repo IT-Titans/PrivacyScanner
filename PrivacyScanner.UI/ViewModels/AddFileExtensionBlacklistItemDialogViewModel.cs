@@ -4,14 +4,17 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Backs the dialog for adding a file extension to the scan blacklist.</summary>
 public class AddFileExtensionBlacklistItemDialogViewModel : ViewModelBase
 {
     private readonly IMediator _mediator;
 
     public AddFileExtensionBlacklistItemDialogViewModel(IMediator mediator)
     {
+        ArgumentNullException.ThrowIfNull(mediator);
+
         _mediator = mediator;
-        AddCommand = new RelayCommand(async _ => await OnAdd(), _ => CanAdd());
+        AddCommand = new RelayCommand(async _ => await OnAddAsync(), _ => CanAdd());
         CancelCommand = new RelayCommand(_ => OnCancel());
     }
 
@@ -40,7 +43,7 @@ public class AddFileExtensionBlacklistItemDialogViewModel : ViewModelBase
         return !string.IsNullOrWhiteSpace(Extension);
     }
 
-    private async Task OnAdd()
+    private async Task OnAddAsync()
     {
         ErrorMessage = null;
 

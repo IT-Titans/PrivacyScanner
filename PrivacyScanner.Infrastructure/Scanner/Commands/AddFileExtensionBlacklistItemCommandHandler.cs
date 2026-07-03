@@ -5,6 +5,9 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Adds a file extension to the blacklist and persists the updated list.
+/// </summary>
 public class AddFileExtensionBlacklistItemCommandHandler(IMediator mediator) : IRequestHandler<AddFileExtensionBlacklistItemCommand>
 {
     public async ValueTask<Unit> Handle(AddFileExtensionBlacklistItemCommand request, CancellationToken cancellationToken)

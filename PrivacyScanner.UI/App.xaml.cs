@@ -23,7 +23,7 @@ public partial class App : Application
         var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
         var path = Path.Combine(commonPath, "PrivacyScanner");
 
-        Directory.CreateDirectory(path); // wichtig!
+        Directory.CreateDirectory(path);
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -76,7 +76,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        Log.CloseAndFlush(); // zwingt Serilog, alles sofort zu schreiben
+        Log.CloseAndFlush(); // forces Serilog to flush everything immediately
         base.OnExit(e);
     }
 }

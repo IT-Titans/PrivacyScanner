@@ -5,6 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Scans a single file with SpaCy and/or the enabled regex rules and combines the resulting warnings.
+/// </summary>
 public class ScanFileCommandHandler(IMediator mediator, ILogger<ScanFileCommandHandler> logger) : IRequestHandler<ScanFileCommand, ScanResultDto>
 {
     public async ValueTask<ScanResultDto> Handle(ScanFileCommand request, CancellationToken cancellationToken)

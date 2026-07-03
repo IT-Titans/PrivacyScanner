@@ -2,7 +2,8 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 
-public class AddRegexRuleCommand : IRequest
+/// <summary>Adds a new user-defined regex rule.</summary>
+public class AddRegexRuleCommand : IRequest<AddRegexRuleCommandResult>
 {
     public required string RuleName { get; init; }
     public required string Rule { get; init; }
