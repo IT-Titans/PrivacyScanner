@@ -67,7 +67,19 @@ public class ProcessScanCommandHandler(
             logger.LogDebug("Processing {FilePath}", filePath);
         }
 
-        if (IsBinaryFile(filePath.FullName))
+        bool isBinary;
+        try
+        {
+            isBinary = IsBinaryFile(filePath.FullName);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "File: {file} could not be read and is being skipped. Path: {pathName}", filePath.Name, filePath.FullName);
+            await PublishFileProcessedEventAsync(currentFileNumber, totalFileCount, scanToken);
+            return;
+        }
+
+        if (isBinary)
         {
             logger.LogWarning("File: {file} is not readable. Path: {pathName}", filePath.Name, filePath.FullName);
             await PublishFileProcessedEventAsync(currentFileNumber, totalFileCount, scanToken);

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.UI.Services;
@@ -32,10 +33,42 @@ public partial class App : Application
                 rollingInterval: RollingInterval.Day)
             .CreateLogger();
 
+        RegisterGlobalExceptionHandlers();
 
         var services = new ServiceCollection();
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// Ensures that no unhandled exception can silently crash the app (or vanish without a log entry).
+    /// UI-thread exceptions are logged and swallowed so the app keeps running; exceptions on other
+    /// threads cannot be safely suppressed but are logged before the process terminates.
+    /// </summary>
+    private void RegisterGlobalExceptionHandlers()
+    {
+        DispatcherUnhandledException += (_, e) =>
+        {
+            Log.Logger.Error(e.Exception, "Unhandled exception on the UI thread");
+            MessageBox.Show(
+                $"Es ist ein unerwarteter Fehler aufgetreten:\n{e.Exception.Message}\n\nDie Anwendung läuft weiter, der Fehler wurde protokolliert.",
+                "Unerwarteter Fehler",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            e.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            Log.Logger.Fatal(e.ExceptionObject as Exception, "Unhandled exception outside the UI thread (IsTerminating: {IsTerminating})", e.IsTerminating);
+            Log.CloseAndFlush();
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Log.Logger.Error(e.Exception, "Unobserved exception in a fire-and-forget task");
+            e.SetObserved();
+        };
     }
 
     private void ConfigureServices(IServiceCollection services)
