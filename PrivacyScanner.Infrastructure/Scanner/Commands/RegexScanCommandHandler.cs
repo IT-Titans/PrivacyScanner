@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
@@ -124,7 +124,8 @@ public class RegexScanCommandHandler(ILogger<ProcessScanCommandHandler> logger) 
 
     private static bool IsValidRegex(string pattern)
     {
-        if (string.IsNullOrWhiteSpace(pattern)) return false;
+        if (string.IsNullOrWhiteSpace(pattern))
+            return false;
 
         try
         {

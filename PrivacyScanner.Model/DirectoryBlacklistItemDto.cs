@@ -1,4 +1,4 @@
-﻿namespace ITTitans.PrivacyScanner.Model;
+namespace ITTitans.PrivacyScanner.Model;
 
 public class DirectoryBlacklistItemDto
 {

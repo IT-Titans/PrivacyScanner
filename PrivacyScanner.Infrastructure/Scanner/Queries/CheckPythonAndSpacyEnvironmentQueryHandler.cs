@@ -1,7 +1,7 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using System.Text.RegularExpressions;
+using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
 using Mediator;
-using System.Text.RegularExpressions;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
@@ -14,13 +14,16 @@ public class CheckPythonAndSpacyEnvironmentQueryHandler(IProcessService processS
         try
         {
             var pythonResult = await CheckPythonVersionAsync();
-            if (!pythonResult.IsValid) return pythonResult;
+            if (!pythonResult.IsValid)
+                return pythonResult;
 
             var spacyResult = await CheckSpacyInstallationAsync();
-            if (!spacyResult.IsValid) return spacyResult;
+            if (!spacyResult.IsValid)
+                return spacyResult;
 
             var spacyModelResult = await CheckSpacyGermanModelAsync();
-            if (!spacyModelResult.IsValid) return spacyModelResult;
+            if (!spacyModelResult.IsValid)
+                return spacyModelResult;
 
             return CheckPythonAndSpacyEnvironmentQueryResult.Success();
         }

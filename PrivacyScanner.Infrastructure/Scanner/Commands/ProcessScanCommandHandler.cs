@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
@@ -107,7 +107,8 @@ public class ProcessScanCommandHandler(
 
     private int GetProgress(int current, int total)
     {
-        if (total == 0) return 0;
+        if (total == 0)
+            return 0;
         return (int)((double)current / total * 100);
     }
 

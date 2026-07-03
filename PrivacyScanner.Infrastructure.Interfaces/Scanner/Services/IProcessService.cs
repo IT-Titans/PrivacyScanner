@@ -1,4 +1,4 @@
-﻿namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
 
 public interface IProcessService
 {

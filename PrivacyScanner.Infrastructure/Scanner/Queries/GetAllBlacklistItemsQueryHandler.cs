@@ -1,8 +1,8 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using System.Text.Json;
+using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
-using System.Text.Json;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 

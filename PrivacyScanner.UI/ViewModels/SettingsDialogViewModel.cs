@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
@@ -59,7 +59,8 @@ public class SettingsDialogViewModel : ViewModelBase
 
     private async Task OnDeleteRule(RegexRule? rule)
     {
-        if (rule == null) return;
+        if (rule == null)
+            return;
 
         var confirmed = await _dialogService.ShowConfirmationAsync(
             "Löschen bestätigen",
@@ -86,7 +87,8 @@ public class SettingsDialogViewModel : ViewModelBase
 
     private async Task OnEditRule(RegexRule? rule)
     {
-        if (rule == null) return;
+        if (rule == null)
+            return;
 
         var editViewModel = new EditRegexRuleDialogViewModel(_mediator, rule);
         var dialog = new Controls.EditRegexRuleDialog

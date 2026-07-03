@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Helpers;
 

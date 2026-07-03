@@ -1,7 +1,7 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+using System.Windows.Input;
+using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.UI.Commands;
 using Mediator;
-using System.Windows.Input;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 

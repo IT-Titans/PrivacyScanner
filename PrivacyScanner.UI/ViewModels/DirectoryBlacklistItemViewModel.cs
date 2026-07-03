@@ -1,4 +1,4 @@
-﻿namespace ITTitans.PrivacyScanner.UI.ViewModels;
+namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
 public class DirectoryBlacklistItemViewModel() : ViewModelBase
 {

@@ -1,9 +1,9 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
-using ITTitans.PrivacyScanner.UI.ViewModels;
 using ITTitans.PrivacyScanner.UI.Services;
+using ITTitans.PrivacyScanner.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;

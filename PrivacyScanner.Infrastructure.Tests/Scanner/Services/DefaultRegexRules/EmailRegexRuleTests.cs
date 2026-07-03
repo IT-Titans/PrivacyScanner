@@ -1,4 +1,4 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
+using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.Model;
 using Xunit;
 

@@ -1,4 +1,4 @@
-﻿using ITTitans.PrivacyScanner.Model;
+using ITTitans.PrivacyScanner.Model;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
@@ -130,7 +130,8 @@ public class LogEntryViewModel : ViewModelBase
         if (string.IsNullOrEmpty(HitLine) || start < 0 || start >= HitLine.Length)
             return start == 0 && length == null ? HitLine : string.Empty;
 
-        if (length == null) return HitLine.Substring(start);
+        if (length == null)
+            return HitLine.Substring(start);
 
         int safeLength = Math.Min(length.Value, HitLine.Length - start);
         return safeLength > 0 ? HitLine.Substring(start, safeLength) : string.Empty;

@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using ITTitans.PrivacyScanner.UI.Controls;
 using MaterialDesignThemes.Wpf;
 

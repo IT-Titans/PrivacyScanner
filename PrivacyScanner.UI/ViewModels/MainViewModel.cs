@@ -1,4 +1,7 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
 using ITTitans.PrivacyScanner.Model;
@@ -8,9 +11,6 @@ using ITTitans.PrivacyScanner.UI.Services;
 using Mediator;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
 using ICommand = System.Windows.Input.ICommand;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
@@ -769,7 +769,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void UpdateTreeNodes(string filePath, int warningCount)
     {
-        if (warningCount == 0) return;
+        if (warningCount == 0)
+            return;
 
         var fileName = Path.GetFileName(filePath);
         var fileNode = _logTreeNodes.OfType<FileLogNodeViewModel>()
@@ -798,8 +799,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     {
         TotalPages = Math.Max(1, (int)Math.Ceiling(_logTreeNodes.Count / (double)PageSize));
 
-        if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-        if (CurrentPage < 1) CurrentPage = 1;
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+        if (CurrentPage < 1)
+            CurrentPage = 1;
 
         var pagedItems = _logTreeNodes
             .Skip((CurrentPage - 1) * PageSize)
@@ -807,7 +810,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             .Where(item => !_pagedLogTreeNodes.Contains(item))
             .ToList();
 
-        if (pagedItems.Count == 0) return;
+        if (pagedItems.Count == 0)
+            return;
 
         _pagedLogTreeNodes.AddRange(pagedItems);
     }
@@ -819,7 +823,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private async Task LoadFileDetailsAsync(FileLogNodeViewModel fileNode)
     {
-        if (fileNode.IsLoaded || fileNode.IsLoading) return;
+        if (fileNode.IsLoaded || fileNode.IsLoading)
+            return;
 
         fileNode.IsLoading = true;
 
@@ -901,7 +906,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnTypeNodeExpanded(TypeLogNodeViewModel typeNode)
     {
-        if (typeNode.IsLoaded || typeNode.IsLoading) return;
+        if (typeNode.IsLoaded || typeNode.IsLoading)
+            return;
         typeNode.IsLoading = true;
 
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
@@ -927,7 +933,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnGroupNodeExpanded(GroupLogNodeViewModel groupNode)
     {
-        if (groupNode.IsLoaded || groupNode.IsLoading) return;
+        if (groupNode.IsLoaded || groupNode.IsLoading)
+            return;
         groupNode.IsLoading = true;
 
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>

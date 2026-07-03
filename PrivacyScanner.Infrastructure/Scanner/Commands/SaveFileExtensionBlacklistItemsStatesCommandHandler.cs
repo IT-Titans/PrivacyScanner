@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using Mediator;
 

@@ -1,4 +1,4 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
 using Mediator;
 

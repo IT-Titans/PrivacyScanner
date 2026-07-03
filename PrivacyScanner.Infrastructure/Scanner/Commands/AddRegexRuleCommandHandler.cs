@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
@@ -36,7 +36,8 @@ public class AddRegexRuleCommandHandler(IMediator mediator, ILogger<AddRegexRule
 
     private bool IsValidRegex(string pattern)
     {
-        if (string.IsNullOrWhiteSpace(pattern)) return false;
+        if (string.IsNullOrWhiteSpace(pattern))
+            return false;
 
         try
         {

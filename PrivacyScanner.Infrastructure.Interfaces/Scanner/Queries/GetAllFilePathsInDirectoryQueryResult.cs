@@ -1,4 +1,4 @@
-﻿namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 
 public class GetAllFilePathsInDirectoryQueryResult
 {

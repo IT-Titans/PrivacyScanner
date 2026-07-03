@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
-using ITTitans.PrivacyScanner.Model;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Helpers;
+using ITTitans.PrivacyScanner.Model;
 using Mediator;
 using Microsoft.Extensions.Logging;
 
@@ -105,7 +105,8 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
         if (!string.IsNullOrEmpty(assemblyLocation))
         {
             var localPath = Path.Combine(assemblyLocation, "Resources", "spacy_scan.py");
-            if (File.Exists(localPath)) return localPath;
+            if (File.Exists(localPath))
+                return localPath;
         }
 
         // Sonst aus Embedded Resources extrahieren

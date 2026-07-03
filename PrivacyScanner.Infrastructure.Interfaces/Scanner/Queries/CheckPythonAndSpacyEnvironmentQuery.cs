@@ -1,4 +1,4 @@
-﻿using Mediator;
+using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
 

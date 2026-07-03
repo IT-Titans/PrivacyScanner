@@ -44,7 +44,8 @@ public class CsvExportService : ICsvExportService, IDisposable
     {
         lock (_lock)
         {
-            if (_writer == null) return;
+            if (_writer == null)
+                return;
 
             var line = string.Join(CsvSeparator,
                 EscapeCsvField(entry.Type.ToString()),

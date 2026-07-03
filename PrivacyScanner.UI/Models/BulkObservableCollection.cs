@@ -7,7 +7,8 @@ public class BulkObservableCollection<T> : ObservableCollection<T>
 {
     public void AddRange(IEnumerable<T> items, int? maxCount = null)
     {
-        if (items == null) return;
+        if (items == null)
+            return;
 
         CheckReentrancy();
 
