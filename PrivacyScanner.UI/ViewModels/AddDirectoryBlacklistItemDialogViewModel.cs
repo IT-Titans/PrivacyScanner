@@ -1,5 +1,5 @@
 using System.IO;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
 using ITTitans.PrivacyScanner.UI.Commands;
 using Mediator;
 

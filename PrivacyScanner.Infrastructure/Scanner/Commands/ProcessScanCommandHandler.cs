@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
@@ -45,67 +45,61 @@ public class ProcessScanCommandHandler(
                 break;
             }
 
-            if (logger.IsEnabled(LogLevel.Debug))
-            {
-                logger.LogDebug("Processing {FilePath}", filePath);
-            }
-
             currentFileNumber++;
-
-            int currentProgress;
-            if (IsBinaryFile(filePath.FullName))
-            {
-                logger.LogWarning("File: {file} is not readable. Path: {pathName}", filePath.Name, filePath.FullName);
-
-                currentProgress = GetProgress(currentFileNumber, fileInfoQueryResult.FileCount);
-
-                await mediator.Publish(
-                    new FileProcessedEvent
-                    {
-                        ScannedFilesCount = currentFileNumber,
-                        TotalFilesCount = fileInfoQueryResult.FileCount,
-                        ProgressInPercent = currentProgress
-                    }, scanToken);
-
-
-                continue;
-            }
-
-            var scanResultDto = await mediator.Send(new ScanFileCommand
-            {
-                FilePath = filePath,
-                RegexRuleList = request.RegexRuleList,
-                UseSpacy = request.UseSpacy
-            }, scanToken);
-
-            var warnings = scanResultDto.Warnings;
-
-            currentProgress = GetProgress(currentFileNumber, fileInfoQueryResult.FileCount);
-
-            await mediator.Publish(
-                new FileProcessedEvent
-                {
-                    ScannedFilesCount = currentFileNumber,
-                    TotalFilesCount = fileInfoQueryResult.FileCount,
-                    ProgressInPercent = currentProgress
-                }, scanToken);
-
-
-            if (warnings.Count == 0)
-                continue;
-
-            await mediator.Publish(
-                new FoundWarningEvent
-                {
-                    ScanResultDto = scanResultDto
-                },
-                scanToken);
+            await ProcessSingleFileAsync(filePath, request, currentFileNumber, fileInfoQueryResult.FileCount, scanToken);
         }
 
         stopwatch.Stop();
         logger.LogInformation("Finished scan. Took '{ElapsedSeconds}' second(s)", stopwatch.Elapsed.TotalSeconds);
 
         return Unit.Value;
+    }
+
+    private async Task ProcessSingleFileAsync(
+        FileInfo filePath,
+        ProcessScanCommand request,
+        int currentFileNumber,
+        int totalFileCount,
+        CancellationToken scanToken)
+    {
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            logger.LogDebug("Processing {FilePath}", filePath);
+        }
+
+        if (IsBinaryFile(filePath.FullName))
+        {
+            logger.LogWarning("File: {file} is not readable. Path: {pathName}", filePath.Name, filePath.FullName);
+            await PublishFileProcessedEventAsync(currentFileNumber, totalFileCount, scanToken);
+            return;
+        }
+
+        var scanResultDto = await mediator.Send(new ScanFileCommand
+        {
+            FilePath = filePath,
+            RegexRuleList = request.RegexRuleList,
+            UseSpacy = request.UseSpacy
+        }, scanToken);
+
+        await PublishFileProcessedEventAsync(currentFileNumber, totalFileCount, scanToken);
+
+        if (scanResultDto.Warnings.Count == 0)
+        {
+            return;
+        }
+
+        await mediator.Publish(new FoundWarningEvent { ScanResultDto = scanResultDto }, scanToken);
+    }
+
+    private async Task PublishFileProcessedEventAsync(int currentFileNumber, int totalFileCount, CancellationToken scanToken)
+    {
+        await mediator.Publish(
+            new FileProcessedEvent
+            {
+                ScannedFilesCount = currentFileNumber,
+                TotalFilesCount = totalFileCount,
+                ProgressInPercent = GetProgress(currentFileNumber, totalFileCount)
+            }, scanToken);
     }
 
     private int GetProgress(int current, int total)
@@ -115,11 +109,11 @@ public class ProcessScanCommandHandler(
         return (int)((double)current / total * 100);
     }
 
-    public static bool IsBinaryFile(string filePath)
+    private static bool IsBinaryFile(string filePath)
     {
         const int sampleSize = 8000;
 
-        byte[] buffer = new byte[sampleSize];
+        var buffer = new byte[sampleSize];
 
         using var stream = File.OpenRead(filePath);
         int bytesRead = stream.Read(buffer, 0, buffer.Length);
@@ -128,7 +122,6 @@ public class ProcessScanCommandHandler(
         {
             if (buffer[i] == 0)
             {
-
                 return true;
             }
         }

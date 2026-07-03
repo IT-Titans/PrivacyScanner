@@ -16,7 +16,7 @@
         Background="{StaticResource PrimaryColor}"
         FontFamily="{md:MaterialDesignFont}"
         Icon="pack://application:,,,/Resources/PrivacyScannerLogo.ico"
-        Title="Privacy Scanner" Height="900" Width="1000">
+        Title="Privacy Scanner" Height="900" Width="1000" MinHeight="500" MinWidth="700">
 
     <Window.Resources>
         <md:NullableToVisibilityConverter x:Key="NullableToVisibilityConverter" />
@@ -28,6 +28,7 @@
     </Window.Resources>
     
     <md:DialogHost Identifier="RootDialog">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid Margin="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/> <!-- Path selection -->
@@ -36,7 +37,7 @@
                 <RowDefinition Height="Auto"/> <!-- Regex rules -->
                 <RowDefinition Height="Auto"/> <!-- Controls -->
                 <RowDefinition Height="Auto"/> <!-- Progress -->
-                <RowDefinition Height="*"/>    <!-- Log -->
+                <RowDefinition Height="Auto"/> <!-- Log -->
             </Grid.RowDefinitions>
 
             <!-- Path selection -->
@@ -465,7 +466,7 @@
             </StackPanel>
 
             <!-- Log area -->
-            <md:Card Grid.Row="6" Padding="0" Background="{DynamicResource MaterialDesignPaper}">
+            <md:Card Grid.Row="6" Padding="0" Background="{DynamicResource MaterialDesignPaper}" MinHeight="300" MaxHeight="600">
     <DockPanel>
         <Border Background="{StaticResource FloatingColor}" Padding="8" DockPanel.Dock="Top">
             <Grid>
@@ -659,5 +660,6 @@
 </md:Card>
 
         </Grid>
+        </ScrollViewer>
     </md:DialogHost>
 </Window>

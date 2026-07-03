@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
 using ITTitans.PrivacyScanner.UI.Commands;
 using ITTitans.PrivacyScanner.UI.Models;

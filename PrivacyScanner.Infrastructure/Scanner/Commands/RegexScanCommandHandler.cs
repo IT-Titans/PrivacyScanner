@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
 using Microsoft.Extensions.Logging;

@@ -3,6 +3,12 @@
 PrivacyScanner is a .NET tool for scanning files for sensitive and personal data.
 Detection is done through **configurable regex patterns** and optionally via **SpaCy** (Natural Language Processing).
  
+> **Note:** PrivacyScanner was built by an apprentice at IT-Titans GmbH as part of
+> their professional training, with the assistance of AI coding tools during design and implementation. It should be
+> read as a learning and training project rather than an audited, production-hardened compliance product. In
+> particular, detection results (regex and SpaCy) are a starting point for manual review, not a guarantee of
+> complete or legally certified GDPR compliance — see [Known Limitations](#known-limitations).
+ 
 ---
  
 ## Overview
@@ -173,7 +179,7 @@ Detailed SpaCy setup instructions can be found in [Install Instructions](install
 ```text
 PrivacyScanner/
 ├── PrivacyScanner.Model                       # DTOs / enums shared across layers
-├── PrivacyScanner.Infrastructure.Interfaces    # Mediator commands/queries and service contracts
+├── PrivacyScanner.Infrastructure.Contracts     # Mediator commands/queries and service contracts
 ├── PrivacyScanner.Infrastructure                # Command/query handlers, scan engine, SpaCy bridge
 ├── PrivacyScanner.UI                           # WPF (MVVM) application
 ├── PrivacyScanner.Tests                        # xUnit tests (run in CI)

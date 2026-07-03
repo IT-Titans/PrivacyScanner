@@ -1,4 +1,4 @@
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 

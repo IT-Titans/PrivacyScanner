@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;

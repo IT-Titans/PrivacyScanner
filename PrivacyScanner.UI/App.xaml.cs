@@ -1,6 +1,6 @@
 using System.IO;
 using System.Windows;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.UI.Services;
 using ITTitans.PrivacyScanner.UI.ViewModels;
@@ -45,7 +45,7 @@ public partial class App : Application
             options.ServiceLifetime = ServiceLifetime.Singleton;
         });
         services.AddSingleton<IProcessService, ProcessService>();
-        services.AddSingleton<IFileSystem, FileSystemService>();
+        services.AddSingleton<IDirectoryProvider, DirectoryProvider>();
         services.AddSingleton<IScannerStateService, ScannerStateService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ICsvExportService, CsvExportService>();

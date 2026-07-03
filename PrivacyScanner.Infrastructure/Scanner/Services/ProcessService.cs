@@ -1,15 +1,42 @@
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
-using ITTitans.PrivacyScanner.Infrastructure.Scanner.Helpers;
+using System.Diagnostics;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 
 /// <summary>
-/// Default <see cref="IProcessService"/> implementation that delegates to <see cref="ProcessHelper"/>.
+/// Default <see cref="IProcessService"/> implementation: runs an external process and captures its
+/// exit code, standard output, and standard error.
 /// </summary>
 public class ProcessService : IProcessService
 {
-    public Task<(int ExitCode, string Output, string Error)> RunCommandAsync(string fileName, string arguments)
+    public async Task<(int ExitCode, string Output, string Error)> RunCommandAsync(string fileName, string arguments)
     {
-        return ProcessHelper.RunCommandAsync(fileName, arguments);
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = new Process { StartInfo = startInfo };
+
+        try
+        {
+            process.Start();
+
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync();
+
+            return (process.ExitCode, await outputTask, await errorTask);
+        }
+        catch (Exception ex)
+        {
+            return (-1, string.Empty, ex.Message);
+        }
     }
 }

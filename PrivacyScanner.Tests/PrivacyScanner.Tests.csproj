@@ -21,7 +21,7 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\PrivacyScanner.Infrastructure\PrivacyScanner.Infrastructure.csproj" />
-      <ProjectReference Include="..\PrivacyScanner.Infrastructure.Interfaces\PrivacyScanner.Infrastructure.Interfaces.csproj" />
+      <ProjectReference Include="..\PrivacyScanner.Infrastructure.Contracts\PrivacyScanner.Infrastructure.Contracts.csproj" />
       <ProjectReference Include="..\PrivacyScanner.Model\PrivacyScanner.Model.csproj" />
     </ItemGroup>
 </Project>

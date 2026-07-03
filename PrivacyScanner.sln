@@ -13,7 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		.github\workflows\pipeline.yml = .github\workflows\pipeline.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.Infrastructure.Interfaces", "PrivacyScanner.Infrastructure.Interfaces\PrivacyScanner.Infrastructure.Interfaces.csproj", "{8F244039-2A18-4986-BF6D-0CCAF813A92A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.Infrastructure.Contracts", "PrivacyScanner.Infrastructure.Contracts\PrivacyScanner.Infrastructure.Contracts.csproj", "{8F244039-2A18-4986-BF6D-0CCAF813A92A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrivacyScanner.Infrastructure", "PrivacyScanner.Infrastructure\PrivacyScanner.Infrastructure.csproj", "{858EE7AA-F26F-4C3A-ACC2-80FC700FDB90}"
 EndProject
