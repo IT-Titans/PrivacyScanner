@@ -1,0 +1,14 @@
+# Normalize line endings to LF for all text files on checkout, regardless of the checking-out
+# machine's git core.autocrlf setting (matches .editorconfig's end_of_line = lf and is required for
+# dotnet format --verify-no-changes to pass consistently in CI on windows-latest runners, which
+# default to core.autocrlf=true).
+* text=auto eol=lf
+
+# Known binary assets: never touch, never diff as text.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.dll binary
+*.exe binary
