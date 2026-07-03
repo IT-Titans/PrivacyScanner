@@ -23,7 +23,7 @@ public static class DefaultRegexRulesProvider
             {
                 RuleId = new Guid("00000001-0000-0000-0000-000000000002"),
                 RuleName = "IBAN",
-                Rule = @"\b[A-Z]{2}[0-9]{2}[ ]?[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{0,4}\b"
+                Rule = @"\b[A-Z]{2}[0-9]{2}(?:[ ]?[0-9]{4}){3,6}(?:[ ]?[0-9]{1,4})?\b"
             },
 
             // Phone number (DE)

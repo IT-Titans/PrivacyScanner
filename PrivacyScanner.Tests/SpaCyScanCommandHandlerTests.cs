@@ -56,7 +56,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         Assert.Single(result.Warnings);
         var warning = result.Warnings[0];
         Assert.Equal(2, warning.Line);
-        Assert.Equal(17, warning.Start);
+        Assert.Equal(startPos, warning.Start);
         Assert.Equal(lines[0], warning.SuspiciousContent.PrevLine);
         Assert.Equal(lines[1], warning.SuspiciousContent.HitLine);
         Assert.Equal(lines[2], warning.SuspiciousContent.NextLine);
@@ -191,7 +191,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         // Assert
         Assert.Single(result.Warnings);
         Assert.Equal(2, result.Warnings[0].Line);
-        Assert.Equal(27, result.Warnings[0].Start);
+        Assert.Equal(startPos, result.Warnings[0].Start);
     }
 
     [Fact]

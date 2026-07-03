@@ -78,8 +78,7 @@ dotnet test PrivacyScanner.Tests\PrivacyScanner.Tests.csproj
 dotnet test PrivacyScanner.Infrastructure.Tests\PrivacyScanner.Infrastructure.Tests.csproj
 ```
  
-> Note: only `PrivacyScanner.Tests` currently runs in CI; `PrivacyScanner.Infrastructure.Tests` must be
-> run manually for now.
+> Note: both test projects run on every push/PR via the [CI/CD pipeline](.github/workflows/pipeline.yml).
  
 ---
  
