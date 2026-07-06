@@ -1,10 +1,13 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
-using Mediator;
 using System.Text.RegularExpressions;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
+using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
+/// <summary>
+/// Checks whether Python 3.12, spaCy, and the German spaCy language model are correctly installed.
+/// </summary>
 public class CheckPythonAndSpacyEnvironmentQueryHandler(IProcessService processService)
     : IRequestHandler<CheckPythonAndSpacyEnvironmentQuery, CheckPythonAndSpacyEnvironmentQueryResult>
 {
@@ -14,13 +17,16 @@ public class CheckPythonAndSpacyEnvironmentQueryHandler(IProcessService processS
         try
         {
             var pythonResult = await CheckPythonVersionAsync();
-            if (!pythonResult.IsValid) return pythonResult;
+            if (!pythonResult.IsValid)
+                return pythonResult;
 
             var spacyResult = await CheckSpacyInstallationAsync();
-            if (!spacyResult.IsValid) return spacyResult;
+            if (!spacyResult.IsValid)
+                return spacyResult;
 
             var spacyModelResult = await CheckSpacyGermanModelAsync();
-            if (!spacyModelResult.IsValid) return spacyModelResult;
+            if (!spacyModelResult.IsValid)
+                return spacyModelResult;
 
             return CheckPythonAndSpacyEnvironmentQueryResult.Success();
         }
@@ -43,7 +49,7 @@ public class CheckPythonAndSpacyEnvironmentQueryHandler(IProcessService processS
                 $"ExitCode: {exitCode}, Error: {error}");
         }
 
-        string combinedOutput = (output + error).Trim();
+        var combinedOutput = (output + error).Trim();
         var versionMatch = Regex.Match(combinedOutput, @"Python 3\.12\.\d+");
         if (!versionMatch.Success)
         {

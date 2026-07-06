@@ -1,8 +1,9 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Minimal <see cref="INotifyPropertyChanged"/> base class for all ViewModels.</summary>
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -14,7 +15,9 @@ public abstract class ViewModelBase : INotifyPropertyChanged
 
     protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
     {
-        if (Equals(storage, value)) return false;
+        if (Equals(storage, value))
+            return false;
+
         storage = value;
         OnPropertyChanged(propertyName);
         return true;

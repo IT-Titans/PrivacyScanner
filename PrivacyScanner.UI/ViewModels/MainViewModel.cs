@@ -1,5 +1,8 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Events;
 using ITTitans.PrivacyScanner.Model;
 using ITTitans.PrivacyScanner.UI.Commands;
@@ -8,17 +11,14 @@ using ITTitans.PrivacyScanner.UI.Services;
 using Mediator;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
 using ICommand = System.Windows.Input.ICommand;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Main window's ViewModel: orchestrates scanning, blacklist/regex management, results tree, and CSV export.</summary>
 public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEvent>, INotificationHandler<FileProcessedEvent>
 {
     private const int MaxWarningsPerRule = 10;
-    private const int MaxLogEntries = 1000;
     private readonly ILogger<MainViewModel> _logger;
     private readonly IMediator _mediator;
     private readonly IDialogService _dialogService;
@@ -31,7 +31,6 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private int _totalFilesCount;
     private ObservableCollection<RegexRule> _allRegexRules = new();
     private ObservableCollection<RegexRule> _filteredRegexRules = new();
-    private BulkObservableCollection<LogEntryViewModel> _logEntries = new();
     private ObservableCollection<LogTreeNodeViewModel> _logTreeNodes = new();
     private BulkObservableCollection<LogTreeNodeViewModel> _pagedLogTreeNodes = new();
     private int _currentPage = 1;
@@ -50,6 +49,11 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     public MainViewModel(IMediator mediator, ILogger<MainViewModel> logger, IDialogService dialogService, ICsvExportService csvExportService)
     {
+        ArgumentNullException.ThrowIfNull(mediator);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(dialogService);
+        ArgumentNullException.ThrowIfNull(csvExportService);
+
         _mediator = mediator;
         _logger = logger;
         _dialogService = dialogService;
@@ -181,15 +185,15 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private bool CanStartScan()
     {
-        // Pfad muss ausgewählt sein
+        // A path must be selected
         if (string.IsNullOrWhiteSpace(SelectedPath))
             return false;
 
-        // Wenn SpaCy aktiviert ist, kann der Scan gestartet werden
+        // If SpaCy is enabled, the scan can be started
         if (IsSpacyEnabled)
             return true;
 
-        // Wenn SpaCy nicht aktiviert ist, muss mindestens eine Regex-Regel aktiviert sein
+        // If SpaCy is not enabled, at least one regex rule must be enabled
         return _allRegexRules.Any(r => r.IsEnabled);
     }
 
@@ -290,7 +294,6 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     }
 
     public ObservableCollection<RegexRule> FilteredRegexRules => _filteredRegexRules;
-    public BulkObservableCollection<LogEntryViewModel> LogEntries => _logEntries;
 
     public ObservableCollection<LogTreeNodeViewModel> PagedLogTreeNodes => _pagedLogTreeNodes;
 
@@ -432,7 +435,6 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnStartScan()
     {
-        LogEntries.Clear();
         Progress = 0;
         ScannedFilesCount = 0;
         TotalFilesCount = 0;
@@ -457,7 +459,6 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         Progress = 0;
         ScannedFilesCount = 0;
         TotalFilesCount = 0;
-        LogEntries.Clear();
         _counter = 0;
         TotalWarningsCount = 0;
         RegexWarningsCount = 0;
@@ -528,7 +529,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             if (_wasScanCancelled)
             {
                 StatusText = "Scan abgebrochen";
-                // Progress bleibt beim aktuellen Wert
+                // Progress stays at its current value
             }
             else
             {
@@ -583,8 +584,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
         await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
 
-        // Nach dem Schließen des Dialogs laden wir die Regeln neu, 
-        // um sicherzustellen, dass die Haupt-UI aktuell ist.
+        // After closing the dialog, reload the rules
+        // to make sure the main UI is up to date.
         await LoadRegexRulesAsync();
     }
 
@@ -694,8 +695,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
         var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
 
-        // Nach dem Schließen des Dialogs laden wir die Regeln neu, 
-        // um sicherzustellen, dass alles aktuell ist.
+        // After closing the dialog, reload the rules
+        // to make sure everything is up to date.
         await LoadRegexRulesAsync();
     }
 
@@ -719,7 +720,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             _logger.LogDebug($"File #{++_counter}");
         }
 
-        // Elemente außerhalb des UI-Threads vorbereiten
+        // Prepare items off the UI thread
         var items = notification.ScanResultDto.Warnings.Select(warning => new LogEntryViewModel
         {
             FilePath = notification.ScanResultDto.FilePath.FullName,
@@ -732,11 +733,11 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             RuleName = warning.RuleName
         }).ToList();
 
-        // Zähle die Warnungen nach Typ
-        int regexCount = items.Count(i => i.Type == ScanWarningType.Rule);
-        int spacyCount = items.Count(i => i.Type == ScanWarningType.SpaCy);
+        // Count the warnings by type
+        var regexCount = items.Count(i => i.Type == ScanWarningType.Rule);
+        var spacyCount = items.Count(i => i.Type == ScanWarningType.SpaCy);
 
-        // CSV-Export (synchronisiert mit den Scan-Ergebnissen)
+        // CSV export (synchronized with the scan results)
         if (_csvExportService.IsExportActive)
         {
             foreach (var item in items)
@@ -752,10 +753,9 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             }
         }
 
-        // Asynchron und im Batch an den Dispatcher übergeben, um UI-Last zu minimieren
+        // Dispatch asynchronously in a batch to minimize UI load
         System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
         {
-            // LogEntries.AddRange(items, MaxLogEntries);
             TotalWarningsCount += items.Count;
             RegexWarningsCount += regexCount;
             SpacyWarningsCount += spacyCount;
@@ -769,7 +769,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void UpdateTreeNodes(string filePath, int warningCount)
     {
-        if (warningCount == 0) return;
+        if (warningCount == 0)
+            return;
 
         var fileName = Path.GetFileName(filePath);
         var fileNode = _logTreeNodes.OfType<FileLogNodeViewModel>()
@@ -784,13 +785,13 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
                 WarningCount = 0
             };
             fileNode.Expanded += OnFileNodeExpanded;
-            // Dummy-Kind hinzufügen, um das Aufklapp-Symbol zu erzwingen
+            // Add a dummy child to force the expand icon
             fileNode.Children.Add(new LoadingLogNodeViewModel { Title = "Lade Details..." });
             _logTreeNodes.Add(fileNode);
         }
 
         fileNode.WarningCount += warningCount;
-        // Der erste TreeNode soll den vollständigen Dateipfad anzeigen
+        // The first tree node should show the full file path
         fileNode.Title = $"{filePath} ({fileNode.WarningCount})";
     }
 
@@ -798,8 +799,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     {
         TotalPages = Math.Max(1, (int)Math.Ceiling(_logTreeNodes.Count / (double)PageSize));
 
-        if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-        if (CurrentPage < 1) CurrentPage = 1;
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+        if (CurrentPage < 1)
+            CurrentPage = 1;
 
         var pagedItems = _logTreeNodes
             .Skip((CurrentPage - 1) * PageSize)
@@ -807,7 +810,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             .Where(item => !_pagedLogTreeNodes.Contains(item))
             .ToList();
 
-        if (pagedItems.Count == 0) return;
+        if (pagedItems.Count == 0)
+            return;
 
         _pagedLogTreeNodes.AddRange(pagedItems);
     }
@@ -819,7 +823,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private async Task LoadFileDetailsAsync(FileLogNodeViewModel fileNode)
     {
-        if (fileNode.IsLoaded || fileNode.IsLoading) return;
+        if (fileNode.IsLoaded || fileNode.IsLoading)
+            return;
 
         fileNode.IsLoading = true;
 
@@ -828,7 +833,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             var filePath = new FileInfo(fileNode.FullPath);
             var warnings = new List<LogEntryViewModel>();
 
-            // Gezielter Scan
+            // Targeted scan
             var regexRules = _allRegexRules
                 .Where(r => r.IsEnabled)
                 .Select(r => new RegexRuleDto { Rule = r.Rule, RuleId = r.RuleId, RuleName = r.RuleName, IsEnabled = r.IsEnabled })
@@ -843,7 +848,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
             warnings.AddRange(scanResult.Warnings.Select(w => MapToViewModel(w, fileNode.FullPath)));
 
-            // UI aktualisieren
+            // Update UI
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 fileNode.Children.Clear();
@@ -901,7 +906,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnTypeNodeExpanded(TypeLogNodeViewModel typeNode)
     {
-        if (typeNode.IsLoaded || typeNode.IsLoading) return;
+        if (typeNode.IsLoaded || typeNode.IsLoading)
+            return;
         typeNode.IsLoading = true;
 
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
@@ -927,14 +933,15 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnGroupNodeExpanded(GroupLogNodeViewModel groupNode)
     {
-        if (groupNode.IsLoaded || groupNode.IsLoading) return;
+        if (groupNode.IsLoaded || groupNode.IsLoading)
+            return;
         groupNode.IsLoading = true;
 
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
         {
             groupNode.Children.Clear();
 
-            // Begrenze auf 500 Einträge pro Kategorie
+            // Limit to MaxWarningsPerRule entries per category
             var limitedWarnings = groupNode.Warnings.Take(MaxWarningsPerRule).ToList();
 
             foreach (var warning in limitedWarnings)
@@ -956,7 +963,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     {
         System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
         {
-            // Indeterminate-Modus beenden, sobald wir die Gesamtzahl kennen
+            // Exit indeterminate mode once we know the total count
             if (IsProgressIndeterminate && notification.TotalFilesCount > 0)
             {
                 IsProgressIndeterminate = false;

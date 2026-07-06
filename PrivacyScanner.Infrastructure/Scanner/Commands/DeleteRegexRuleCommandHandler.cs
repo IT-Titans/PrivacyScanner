@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using System.Text.Json;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
 
@@ -9,9 +9,9 @@ namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 /// Deletes One Regex out of your regexes
 /// </summary>
 /// <param name="mediator"></param>
-public class DeleteRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<DeleteRegexRuleCommand>
+public class DeleteRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<DeleteRegexRuleCommand, DeleteRegexRuleCommandResult>
 {
-    public async ValueTask<Unit> Handle(DeleteRegexRuleCommand request, CancellationToken cancellationToken)
+    public async ValueTask<DeleteRegexRuleCommandResult> Handle(DeleteRegexRuleCommand request, CancellationToken cancellationToken)
     {
         var regexRuleDtos = await mediator.Send(new GetAllRegexRulesQuery { });
 
@@ -19,12 +19,12 @@ public class DeleteRegexRuleCommandHandler(IMediator mediator) : IRequestHandler
 
         if (regexToBeRemoved == null)
         {
-            throw new ArgumentException("This Regex does not exist");
+            return DeleteRegexRuleCommandResult.Failure("This Regex does not exist");
         }
 
         regexRuleDtos.Rules.Remove(regexToBeRemoved);
         await mediator.Send(new SaveRegexRulesCommand { RegexRuleDtos = regexRuleDtos.Rules });
 
-        return Unit.Value;
+        return DeleteRegexRuleCommandResult.Success();
     }
 }

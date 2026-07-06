@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using ITTitans.PrivacyScanner.UI.ViewModels;
 
 namespace ITTitans.PrivacyScanner.UI;
@@ -10,6 +10,8 @@ public partial class MainWindow : Window
 {
     public MainWindow(MainViewModel viewModel)
     {
+        ArgumentNullException.ThrowIfNull(viewModel);
+
         InitializeComponent();
         DataContext = viewModel;
 

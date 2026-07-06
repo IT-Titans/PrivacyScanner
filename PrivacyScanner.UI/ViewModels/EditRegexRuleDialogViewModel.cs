@@ -1,10 +1,11 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
 using ITTitans.PrivacyScanner.UI.Commands;
 using ITTitans.PrivacyScanner.UI.Models;
 using Mediator;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Backs the dialog for editing an existing regex rule's name and pattern.</summary>
 public class EditRegexRuleDialogViewModel : ViewModelBase
 {
     private readonly IMediator _mediator;
@@ -15,12 +16,15 @@ public class EditRegexRuleDialogViewModel : ViewModelBase
 
     public EditRegexRuleDialogViewModel(IMediator mediator, RegexRule rule)
     {
+        ArgumentNullException.ThrowIfNull(mediator);
+        ArgumentNullException.ThrowIfNull(rule);
+
         _mediator = mediator;
         _ruleId = rule.RuleId;
         _ruleName = rule.RuleName;
         _regex = rule.Rule;
 
-        UpdateCommand = new RelayCommand(async _ => await OnUpdate(), _ => CanUpdate());
+        UpdateCommand = new RelayCommand(async _ => await OnUpdateAsync(), _ => CanUpdate());
         CancelCommand = new RelayCommand(_ => OnCancel());
     }
 
@@ -52,23 +56,24 @@ public class EditRegexRuleDialogViewModel : ViewModelBase
         return !string.IsNullOrWhiteSpace(RuleName) && !string.IsNullOrWhiteSpace(Regex);
     }
 
-    private async Task OnUpdate()
+    private async Task OnUpdateAsync()
     {
         ErrorMessage = null;
-        try
+
+        var result = await _mediator.Send(new EditRegexRuleCommand
         {
-            await _mediator.Send(new EditRegexRuleCommand
-            {
-                RuleId = _ruleId,
-                RuleName = RuleName,
-                Rule = Regex
-            });
-            RequestClose?.Invoke();
-        }
-        catch (Exception ex)
+            RuleId = _ruleId,
+            RuleName = RuleName,
+            Rule = Regex
+        });
+
+        if (!result.IsSuccess)
         {
-            ErrorMessage = ex.Message;
+            ErrorMessage = result.ErrorMessage;
+            return;
         }
+
+        RequestClose?.Invoke();
     }
 
     private void OnCancel()

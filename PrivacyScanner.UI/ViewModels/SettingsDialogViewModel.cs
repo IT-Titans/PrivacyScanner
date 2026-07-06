@@ -1,7 +1,7 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
 using ITTitans.PrivacyScanner.UI.Commands;
 using ITTitans.PrivacyScanner.UI.Models;
@@ -10,6 +10,7 @@ using Mediator;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
 
+/// <summary>Backs the settings dialog for listing, editing, and deleting regex rules.</summary>
 public class SettingsDialogViewModel : ViewModelBase
 {
     private readonly IMediator _mediator;
@@ -18,10 +19,13 @@ public class SettingsDialogViewModel : ViewModelBase
 
     public SettingsDialogViewModel(IMediator mediator, IDialogService dialogService)
     {
+        ArgumentNullException.ThrowIfNull(mediator);
+        ArgumentNullException.ThrowIfNull(dialogService);
+
         _mediator = mediator;
         _dialogService = dialogService;
-        DeleteRuleCommand = new RelayCommand<RegexRule>(async rule => await OnDeleteRule(rule));
-        EditRuleCommand = new RelayCommand<RegexRule>(async rule => await OnEditRule(rule));
+        DeleteRuleCommand = new RelayCommand<RegexRule>(async rule => await OnDeleteRuleAsync(rule));
+        EditRuleCommand = new RelayCommand<RegexRule>(async rule => await OnEditRuleAsync(rule));
         CloseCommand = new RelayCommand(_ => OnClose());
     }
 
@@ -57,9 +61,10 @@ public class SettingsDialogViewModel : ViewModelBase
         }
     }
 
-    private async Task OnDeleteRule(RegexRule? rule)
+    private async Task OnDeleteRuleAsync(RegexRule? rule)
     {
-        if (rule == null) return;
+        if (rule == null)
+            return;
 
         var confirmed = await _dialogService.ShowConfirmationAsync(
             "Löschen bestätigen",
@@ -68,15 +73,16 @@ public class SettingsDialogViewModel : ViewModelBase
 
         if (confirmed)
         {
-            try
+            var result = await _mediator.Send(new DeleteRegexRuleCommand { RuleId = rule.RuleId });
+
+            if (result.IsSuccess)
             {
-                await _mediator.Send(new DeleteRegexRuleCommand { RuleId = rule.RuleId });
                 Rules.Remove(rule);
             }
-            catch (Exception ex)
+            else
             {
                 MessageBox.Show(
-                    $"Fehler beim Löschen der Regel: {ex.Message}",
+                    $"Fehler beim Löschen der Regel: {result.ErrorMessage}",
                     "Fehler",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -84,9 +90,10 @@ public class SettingsDialogViewModel : ViewModelBase
         }
     }
 
-    private async Task OnEditRule(RegexRule? rule)
+    private async Task OnEditRuleAsync(RegexRule? rule)
     {
-        if (rule == null) return;
+        if (rule == null)
+            return;
 
         var editViewModel = new EditRegexRuleDialogViewModel(_mediator, rule);
         var dialog = new Controls.EditRegexRuleDialog
@@ -98,7 +105,7 @@ public class SettingsDialogViewModel : ViewModelBase
 
         await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "SettingsDialogHost");
 
-        // Nach dem Editieren Liste neu laden
+        // Reload the list after editing
         await LoadRulesAsync();
     }
 

@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 using ITTitans.PrivacyScanner.UI.ViewModels;
 
 namespace ITTitans.PrivacyScanner.UI.Controls;

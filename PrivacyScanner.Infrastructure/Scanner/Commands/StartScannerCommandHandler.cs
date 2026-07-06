@@ -1,9 +1,12 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Resets the scanner's cancellation state and kicks off a new scan.
+/// </summary>
 public class StartScannerCommandHandler(IMediator mediator, IScannerStateService scannerStateService) : IRequestHandler<StartScannerCommand>
 {
 

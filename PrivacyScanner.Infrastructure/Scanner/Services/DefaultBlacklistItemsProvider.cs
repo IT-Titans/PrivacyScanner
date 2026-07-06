@@ -2,6 +2,9 @@ using ITTitans.PrivacyScanner.Model;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 
+/// <summary>
+/// Provides the default directory and file extension blacklist entries used when no saved blacklist exists yet.
+/// </summary>
 public static class DefaultBlacklistItemsProvider
 {
     public static List<DirectoryBlacklistItemDto> GetDefaultDirectoryItems()

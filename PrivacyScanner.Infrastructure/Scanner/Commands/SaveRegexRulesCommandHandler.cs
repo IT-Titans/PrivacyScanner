@@ -1,9 +1,12 @@
-﻿using System.Text.Json;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
+using System.Text.Json;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
 using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 
+/// <summary>
+/// Persists the full list of regex rules to disk as JSON.
+/// </summary>
 public class SaveRegexRulesCommandHandler : IRequestHandler<SaveRegexRulesCommand>
 {
     public async ValueTask<Unit> Handle(SaveRegexRulesCommand request, CancellationToken cancellationToken)
@@ -14,7 +17,6 @@ public class SaveRegexRulesCommandHandler : IRequestHandler<SaveRegexRulesComman
         Directory.CreateDirectory(path);
 
         path = Path.Combine(path, "rules.json");
-
 
 
         var json = JsonSerializer.Serialize(request.RegexRuleDtos, new JsonSerializerOptions

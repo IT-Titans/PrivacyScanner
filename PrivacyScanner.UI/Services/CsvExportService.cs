@@ -4,6 +4,7 @@ using ITTitans.PrivacyScanner.UI.ViewModels;
 
 namespace ITTitans.PrivacyScanner.UI.Services;
 
+/// <summary>Writes scan findings to a semicolon-separated CSV file as they are found.</summary>
 public class CsvExportService : ICsvExportService, IDisposable
 {
     private StreamWriter? _writer;
@@ -44,7 +45,8 @@ public class CsvExportService : ICsvExportService, IDisposable
     {
         lock (_lock)
         {
-            if (_writer == null) return;
+            if (_writer == null)
+                return;
 
             var line = string.Join(CsvSeparator,
                 EscapeCsvField(entry.Type.ToString()),

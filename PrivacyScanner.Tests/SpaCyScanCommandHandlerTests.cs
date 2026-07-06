@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using System.Text.Json;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 using ITTitans.PrivacyScanner.Model;
 using Microsoft.Extensions.Logging;
@@ -9,6 +9,7 @@ using Xunit;
 
 namespace ITTitans.PrivacyScanner.Tests;
 
+/// <summary>Tests JSON parsing and context-window handling of <see cref="SpaCyScanCommandHandler"/> against a mocked process.</summary>
 public class SpaCyScanCommandHandlerTests : IDisposable
 {
     private readonly Mock<IProcessService> _processServiceMock;
@@ -41,7 +42,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
 
         var spacyOutput = CreateSpacyOutput("Entity", 10);
 
-        int startPos = lines[0].Length + Environment.NewLine.Length + 8;
+        var startPos = lines[0].Length + Environment.NewLine.Length + 8;
 
         _processServiceMock.Setup(x => x.RunCommandAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((0, CreateSpacyOutput("Entity", startPos, 2, lines[0], lines[1], lines[2]), ""));
@@ -55,7 +56,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         Assert.Single(result.Warnings);
         var warning = result.Warnings[0];
         Assert.Equal(2, warning.Line);
-        Assert.Equal(17, warning.Start);
+        Assert.Equal(startPos, warning.Start);
         Assert.Equal(lines[0], warning.SuspiciousContent.PrevLine);
         Assert.Equal(lines[1], warning.SuspiciousContent.HitLine);
         Assert.Equal(lines[2], warning.SuspiciousContent.NextLine);
@@ -94,7 +95,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         var lines = new[] { "Zeile 1", "Zeile 2", "Entity in Zeile 3" };
         await File.WriteAllLinesAsync(_tempFilePath, lines);
 
-        int startPos = (lines[0].Length + Environment.NewLine.Length) + (lines[1].Length + Environment.NewLine.Length);
+        var startPos = (lines[0].Length + Environment.NewLine.Length) + (lines[1].Length + Environment.NewLine.Length);
 
         _processServiceMock.Setup(x => x.RunCommandAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((0, CreateSpacyOutput("Entity", startPos, 3, lines[1], lines[2], string.Empty), ""));
@@ -166,18 +167,18 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         var lines = new[] { "Überprüfung mit Emoji 🛡️", "Entity hier" };
         await File.WriteAllLinesAsync(_tempFilePath, lines);
 
-        // "Überprüfung mit Emoji 🛡️"
-        // Überprüfung = 11
-        // Leerzeichen = 1
-        // mit = 3
-        // Leerzeichen = 1
-        // Emoji = 5
-        // Leerzeichen = 1
-        // 🛡️ = 🛡 (U+1F6E1) + FE0F (Variation Selector) -> In UTF-16 (C# string) sind das Surrogate Pairs.
-        // 🛡 ist 2 chars. FE0F ist 1 char. Zusammen 3 chars?
+        // Test string: "Überprüfung mit Emoji 🛡️" (kept in German — the char count below is specific to this word)
+        // "Überprüfung" = 11 chars
+        // space = 1
+        // "mit" = 3
+        // space = 1
+        // emoji = 5
+        // space = 1
+        // 🛡️ = 🛡 (U+1F6E1) + FE0F (variation selector) -> in UTF-16 (C# string) these are surrogate pairs.
+        // 🛡 is 2 chars. FE0F is 1 char. Together 3 chars?
 
-        int line1Length = lines[0].Length;
-        int startPos = line1Length + Environment.NewLine.Length + 0; // "Entity" am Anfang von Zeile 2
+        var line1Length = lines[0].Length;
+        var startPos = line1Length + Environment.NewLine.Length + 0; // "Entity" at the start of line 2
 
         _processServiceMock.Setup(x => x.RunCommandAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((0, CreateSpacyOutput("Entity", startPos, 2, lines[0], lines[1], ""), ""));
@@ -190,7 +191,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         // Assert
         Assert.Single(result.Warnings);
         Assert.Equal(2, result.Warnings[0].Line);
-        Assert.Equal(27, result.Warnings[0].Start);
+        Assert.Equal(startPos, result.Warnings[0].Start);
     }
 
     [Fact]
@@ -245,8 +246,8 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        // Wir können hier nicht hart prüfen, ob es klappt, da SpaCy eventuell nicht installiert ist.
-        // Aber wir prüfen, dass keine Exception fliegt.
+        // We can't strictly verify success here, since SpaCy might not be installed.
+        // But we do verify that no exception is thrown.
         Assert.NotNull(result);
     }
 

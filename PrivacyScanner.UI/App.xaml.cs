@@ -1,9 +1,10 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using System.Windows.Threading;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
-using ITTitans.PrivacyScanner.UI.ViewModels;
 using ITTitans.PrivacyScanner.UI.Services;
+using ITTitans.PrivacyScanner.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -23,7 +24,7 @@ public partial class App : Application
         var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
         var path = Path.Combine(commonPath, "PrivacyScanner");
 
-        Directory.CreateDirectory(path); // wichtig!
+        Directory.CreateDirectory(path);
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -32,10 +33,42 @@ public partial class App : Application
                 rollingInterval: RollingInterval.Day)
             .CreateLogger();
 
+        RegisterGlobalExceptionHandlers();
 
         var services = new ServiceCollection();
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// Ensures that no unhandled exception can silently crash the app (or vanish without a log entry).
+    /// UI-thread exceptions are logged and swallowed so the app keeps running; exceptions on other
+    /// threads cannot be safely suppressed but are logged before the process terminates.
+    /// </summary>
+    private void RegisterGlobalExceptionHandlers()
+    {
+        DispatcherUnhandledException += (_, e) =>
+        {
+            Log.Logger.Error(e.Exception, "Unhandled exception on the UI thread");
+            MessageBox.Show(
+                $"Es ist ein unerwarteter Fehler aufgetreten:\n{e.Exception.Message}\n\nDie Anwendung läuft weiter, der Fehler wurde protokolliert.",
+                "Unerwarteter Fehler",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            e.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            Log.Logger.Fatal(e.ExceptionObject as Exception, "Unhandled exception outside the UI thread (IsTerminating: {IsTerminating})", e.IsTerminating);
+            Log.CloseAndFlush();
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Log.Logger.Error(e.Exception, "Unobserved exception in a fire-and-forget task");
+            e.SetObserved();
+        };
     }
 
     private void ConfigureServices(IServiceCollection services)
@@ -45,7 +78,7 @@ public partial class App : Application
             options.ServiceLifetime = ServiceLifetime.Singleton;
         });
         services.AddSingleton<IProcessService, ProcessService>();
-        services.AddSingleton<IFileSystem, FileSystemService>();
+        services.AddSingleton<IDirectoryProvider, DirectoryProvider>();
         services.AddSingleton<IScannerStateService, ScannerStateService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ICsvExportService, CsvExportService>();
@@ -76,7 +109,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        Log.CloseAndFlush(); // zwingt Serilog, alles sofort zu schreiben
+        Log.CloseAndFlush(); // forces Serilog to flush everything immediately
         base.OnExit(e);
     }
 }

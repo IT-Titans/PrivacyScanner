@@ -1,12 +1,16 @@
-﻿using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using System.Text.Json;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
-public class GetAllBlacklistItemsQueryHandler : IRequestHandler<GetAllBlacklistItemsQuery, GetAllBlacklistItemsQueryResult>
+/// <summary>
+/// Loads the directory and file extension blacklists from disk, falling back to the built-in defaults.
+/// </summary>
+public class GetAllBlacklistItemsQueryHandler(ILogger<GetAllBlacklistItemsQueryHandler> logger) : IRequestHandler<GetAllBlacklistItemsQuery, GetAllBlacklistItemsQueryResult>
 {
     public async ValueTask<GetAllBlacklistItemsQueryResult> Handle(GetAllBlacklistItemsQuery request, CancellationToken cancellationToken)
     {
@@ -25,24 +29,40 @@ public class GetAllBlacklistItemsQueryHandler : IRequestHandler<GetAllBlacklistI
         });
     }
 
-    private static async Task<List<DirectoryBlacklistItemDto>> LoadDirectoryBlacklistItemsAsync(string path)
+    private async Task<List<DirectoryBlacklistItemDto>> LoadDirectoryBlacklistItemsAsync(string path)
     {
         if (!File.Exists(path))
         {
             return DefaultBlacklistItemsProvider.GetDefaultDirectoryItems();
         }
 
-        return await LoadBlacklistItemsAsync<DirectoryBlacklistItemDto>(path);
+        try
+        {
+            return await LoadBlacklistItemsAsync<DirectoryBlacklistItemDto>(path);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(ex, "Konnte die gespeicherte Verzeichnis-Blacklist unter {Path} nicht laden, es werden die Standardwerte verwendet", path);
+            return DefaultBlacklistItemsProvider.GetDefaultDirectoryItems();
+        }
     }
 
-    private static async Task<List<FileExtensionBlacklistItemDto>> LoadFileExtensionBlacklistItemsAsync(string path)
+    private async Task<List<FileExtensionBlacklistItemDto>> LoadFileExtensionBlacklistItemsAsync(string path)
     {
         if (!File.Exists(path))
         {
             return DefaultBlacklistItemsProvider.GetDefaultFileExtensionItems();
         }
 
-        return await LoadBlacklistItemsAsync<FileExtensionBlacklistItemDto>(path);
+        try
+        {
+            return await LoadBlacklistItemsAsync<FileExtensionBlacklistItemDto>(path);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(ex, "Konnte die gespeicherte Dateiendungs-Blacklist unter {Path} nicht laden, es werden die Standardwerte verwendet", path);
+            return DefaultBlacklistItemsProvider.GetDefaultFileExtensionItems();
+        }
     }
 
     private static async Task<List<TBlacklistItem>> LoadBlacklistItemsAsync<TBlacklistItem>(string path)

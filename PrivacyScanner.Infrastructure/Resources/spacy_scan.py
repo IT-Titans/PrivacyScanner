@@ -1,4 +1,4 @@
-﻿import json
+import json
 import sys
 import argparse
 import spacy
@@ -32,7 +32,7 @@ def run(path, chunk_size):
     text = source.read_text("utf-8")
     lines = text.splitlines(keepends=True)
 
-    # Start-Offset jeder Zeile im Gesamtdokument
+    # Start offset of each line within the overall document
     line_offsets = []
     offset = 0
     for line in lines:
@@ -40,7 +40,7 @@ def run(path, chunk_size):
         offset += len(line)
 
     def find_line_index(char_pos):
-        # Rückwärts suchen ist hier ok, da Treffer meist nahe beieinander liegen
+        # Searching backwards is fine here, since hits are usually close together
         for i in range(len(line_offsets) - 1, -1, -1):
             if char_pos >= line_offsets[i]:
                 return i
@@ -49,10 +49,10 @@ def run(path, chunk_size):
     entities = []
 
     buffer = ""
-    buffer_start_offset = 0  # absolute Position im Gesamttest
+    buffer_start_offset = 0  # absolute position within the overall text
 
     for line in lines:
-        # Wenn der Buffer zu groß wird → analysieren
+        # If the buffer gets too large, analyze it
         if len(buffer) + len(line) > chunk_size:
             doc = nlp(buffer)
 
@@ -79,7 +79,7 @@ def run(path, chunk_size):
 
         buffer += line
 
-    # Restbuffer verarbeiten
+    # Process the remaining buffer
     if buffer:
         doc = nlp(buffer)
 

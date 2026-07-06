@@ -4,6 +4,7 @@ using System.Windows.Media;
 
 namespace ITTitans.PrivacyScanner.UI.Converters;
 
+/// <summary>Converts a bool (enabled state) to a solid background brush for regex rule chips.</summary>
 public class BoolToBackgroundConverter : IValueConverter
 {
     private static readonly SolidColorBrush EnabledBrush = new(Color.FromRgb(7, 122, 186)); // SecondaryColor #077aba

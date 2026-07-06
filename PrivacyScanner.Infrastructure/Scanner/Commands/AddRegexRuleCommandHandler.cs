@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
 using Microsoft.Extensions.Logging;
@@ -11,13 +11,13 @@ namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 /// Adds one Regex to your list
 /// </summary>
 /// <param name="mediator"></param>
-public class AddRegexRuleCommandHandler(IMediator mediator, ILogger<AddRegexRuleCommandHandler> logger) : IRequestHandler<AddRegexRuleCommand>
+public class AddRegexRuleCommandHandler(IMediator mediator, ILogger<AddRegexRuleCommandHandler> logger) : IRequestHandler<AddRegexRuleCommand, AddRegexRuleCommandResult>
 {
-    public async ValueTask<Unit> Handle(AddRegexRuleCommand request, CancellationToken cancellationToken)
+    public async ValueTask<AddRegexRuleCommandResult> Handle(AddRegexRuleCommand request, CancellationToken cancellationToken)
     {
         if (!IsValidRegex(request.Rule))
         {
-            throw new ArgumentException($"Der eingegebene Regex ist ungültig");
+            return AddRegexRuleCommandResult.Failure("Der eingegebene Regex ist ungültig");
         }
 
         var currentRegexDtos = await mediator.Send(new GetAllRegexRulesQuery { });
@@ -31,12 +31,13 @@ public class AddRegexRuleCommandHandler(IMediator mediator, ILogger<AddRegexRule
 
         await mediator.Send(new SaveRegexRulesCommand { RegexRuleDtos = currentRegexDtos.Rules });
 
-        return Unit.Value;
+        return AddRegexRuleCommandResult.Success();
     }
 
     private bool IsValidRegex(string pattern)
     {
-        if (string.IsNullOrWhiteSpace(pattern)) return false;
+        if (string.IsNullOrWhiteSpace(pattern))
+            return false;
 
         try
         {

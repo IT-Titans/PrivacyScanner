@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Commands;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using System.Text.Json;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
 
@@ -9,21 +9,21 @@ namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 /// Change one regex out of your regexes
 /// </summary>
 /// <param name="mediator"></param>
-public class EditRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<EditRegexRuleCommand>
+public class EditRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<EditRegexRuleCommand, EditRegexRuleCommandResult>
 {
-    public async ValueTask<Unit> Handle(EditRegexRuleCommand request, CancellationToken cancellationToken)
+    public async ValueTask<EditRegexRuleCommandResult> Handle(EditRegexRuleCommand request, CancellationToken cancellationToken)
     {
         var regexRuleDtos = await mediator.Send(new GetAllRegexRulesQuery { });
         var regexToEdit = regexRuleDtos.Rules.FirstOrDefault(rRD => rRD.RuleId == request.RuleId);
 
         if (regexToEdit == null)
         {
-            throw new ArgumentException("This Regex does not exist");
+            return EditRegexRuleCommandResult.Failure("This Regex does not exist");
         }
 
         if (request.Rule == null && request.RuleName == null)
         {
-            throw new ArgumentException("Missing information what to change");
+            return EditRegexRuleCommandResult.Failure("Missing information what to change");
         }
         else if (request.Rule != null && request.RuleName != null)
         {
@@ -64,6 +64,6 @@ public class EditRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<E
 
         await mediator.Send(new SaveRegexRulesCommand { RegexRuleDtos = regexRuleDtos.Rules });
 
-        return Unit.Value;
+        return EditRegexRuleCommandResult.Success();
     }
 }

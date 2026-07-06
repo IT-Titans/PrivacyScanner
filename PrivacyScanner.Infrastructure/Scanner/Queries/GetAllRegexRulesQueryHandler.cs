@@ -1,12 +1,16 @@
-﻿using System.Text.Json;
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Queries;
+using System.Text.Json;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
+using Microsoft.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 
-public class GetAllRegexRulesQueryHandler : IRequestHandler<GetAllRegexRulesQuery, GetAllRegexRulesQueryResult>
+/// <summary>
+/// Merges the built-in default regex rules with the user's saved rules, letting saved rules override defaults by <c>RuleId</c>.
+/// </summary>
+public class GetAllRegexRulesQueryHandler(ILogger<GetAllRegexRulesQueryHandler> logger) : IRequestHandler<GetAllRegexRulesQuery, GetAllRegexRulesQueryResult>
 {
     public async ValueTask<GetAllRegexRulesQueryResult> Handle(GetAllRegexRulesQuery request, CancellationToken cancellationToken)
     {
@@ -29,14 +33,22 @@ public class GetAllRegexRulesQueryHandler : IRequestHandler<GetAllRegexRulesQuer
         });
     }
 
-    private static async Task<List<RegexRuleDto>> LoadUserRulesAsync(string path)
+    private async Task<List<RegexRuleDto>> LoadUserRulesAsync(string path)
     {
         if (!File.Exists(path))
             return new List<RegexRuleDto>();
 
-        var json = await File.ReadAllTextAsync(path);
+        try
+        {
+            var json = await File.ReadAllTextAsync(path);
 
-        return JsonSerializer.Deserialize<List<RegexRuleDto>>(json)
-               ?? new List<RegexRuleDto>();
+            return JsonSerializer.Deserialize<List<RegexRuleDto>>(json)
+                   ?? new List<RegexRuleDto>();
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(ex, "Konnte gespeicherte Regex-Regeln unter {Path} nicht laden, es werden nur die Standardregeln verwendet", path);
+            return new List<RegexRuleDto>();
+        }
     }
 }

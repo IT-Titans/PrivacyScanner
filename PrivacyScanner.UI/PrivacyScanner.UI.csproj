@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <RootNamespace>ITTitans.PrivacyScanner.UI</RootNamespace>
         <AssemblyName>$(RootNamespace)</AssemblyName>
@@ -22,7 +22,7 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\PrivacyScanner.Infrastructure\PrivacyScanner.Infrastructure.csproj" />
-      <ProjectReference Include="..\PrivacyScanner.Infrastructure.Interfaces\PrivacyScanner.Infrastructure.Interfaces.csproj" />
+      <ProjectReference Include="..\PrivacyScanner.Infrastructure.Contracts\PrivacyScanner.Infrastructure.Contracts.csproj" />
     </ItemGroup>
     <ItemGroup>
       <Resource Include="Resources\PrivacyScannerLogo.ico" />

@@ -1,7 +1,10 @@
-using ITTitans.PrivacyScanner.Infrastructure.Interfaces.Scanner.Services;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 
+/// <summary>
+/// Holds the cancellation token source for the currently running (or most recent) scan.
+/// </summary>
 public class ScannerStateService : IScannerStateService, IDisposable
 {
     private CancellationTokenSource _cts = new();
