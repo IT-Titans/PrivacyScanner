@@ -128,9 +128,9 @@ public class ProcessScanCommandHandler(
         var buffer = new byte[sampleSize];
 
         using var stream = File.OpenRead(filePath);
-        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        var bytesRead = stream.Read(buffer, 0, buffer.Length);
 
-        for (int i = 0; i < bytesRead; i++)
+        for (var i = 0; i < bytesRead; i++)
         {
             if (buffer[i] == 0)
             {

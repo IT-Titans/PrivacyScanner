@@ -134,7 +134,7 @@ public class LogEntryViewModel : ViewModelBase
         if (length == null)
             return HitLine.Substring(start);
 
-        int safeLength = Math.Min(length.Value, HitLine.Length - start);
+        var safeLength = Math.Min(length.Value, HitLine.Length - start);
         return safeLength > 0 ? HitLine.Substring(start, safeLength) : string.Empty;
     }
 

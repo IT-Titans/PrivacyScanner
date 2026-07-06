@@ -41,7 +41,7 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
             var allLines = await File.ReadAllLinesAsync(request.FilePath.FullName, cancellationToken);
 
             // Step 3: Get path to SpaCy script
-            string scriptPath = await GetScriptPathAsync(cancellationToken);
+            var scriptPath = await GetScriptPathAsync(cancellationToken);
 
             var (exitCode, output, error) = await _processService.RunCommandAsync(
                 "py", $"-3.12 \"{scriptPath}\" \"{request.FilePath.FullName}\"");

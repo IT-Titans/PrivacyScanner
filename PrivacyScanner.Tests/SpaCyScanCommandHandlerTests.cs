@@ -42,7 +42,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
 
         var spacyOutput = CreateSpacyOutput("Entity", 10);
 
-        int startPos = lines[0].Length + Environment.NewLine.Length + 8;
+        var startPos = lines[0].Length + Environment.NewLine.Length + 8;
 
         _processServiceMock.Setup(x => x.RunCommandAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((0, CreateSpacyOutput("Entity", startPos, 2, lines[0], lines[1], lines[2]), ""));
@@ -95,7 +95,7 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         var lines = new[] { "Zeile 1", "Zeile 2", "Entity in Zeile 3" };
         await File.WriteAllLinesAsync(_tempFilePath, lines);
 
-        int startPos = (lines[0].Length + Environment.NewLine.Length) + (lines[1].Length + Environment.NewLine.Length);
+        var startPos = (lines[0].Length + Environment.NewLine.Length) + (lines[1].Length + Environment.NewLine.Length);
 
         _processServiceMock.Setup(x => x.RunCommandAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((0, CreateSpacyOutput("Entity", startPos, 3, lines[1], lines[2], string.Empty), ""));
@@ -177,8 +177,8 @@ public class SpaCyScanCommandHandlerTests : IDisposable
         // 🛡️ = 🛡 (U+1F6E1) + FE0F (variation selector) -> in UTF-16 (C# string) these are surrogate pairs.
         // 🛡 is 2 chars. FE0F is 1 char. Together 3 chars?
 
-        int line1Length = lines[0].Length;
-        int startPos = line1Length + Environment.NewLine.Length + 0; // "Entity" at the start of line 2
+        var line1Length = lines[0].Length;
+        var startPos = line1Length + Environment.NewLine.Length + 0; // "Entity" at the start of line 2
 
         _processServiceMock.Setup(x => x.RunCommandAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((0, CreateSpacyOutput("Entity", startPos, 2, lines[0], lines[1], ""), ""));

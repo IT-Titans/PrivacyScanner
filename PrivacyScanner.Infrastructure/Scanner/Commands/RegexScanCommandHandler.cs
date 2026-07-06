@@ -18,11 +18,11 @@ public class RegexScanCommandHandler(ILogger<ProcessScanCommandHandler> logger) 
         List<ScanWarningDto> warnings = new List<ScanWarningDto>();
 
         var linesAsync = File.ReadLinesAsync(request.FilePath.FullName, cancellationToken);
-        int currentLineNumber = 1;
+        var currentLineNumber = 1;
 
         string? prevLine = null;
         string current = null!;
-        bool first = true;
+        var first = true;
         List<RegexRuleDto> regexRuleDtos = new List<RegexRuleDto>();
 
         foreach (var regexDto in request.RegexRuleList)
@@ -37,7 +37,7 @@ public class RegexScanCommandHandler(ILogger<ProcessScanCommandHandler> logger) 
             }
         }
 
-        await foreach (string next in linesAsync)
+        await foreach (var next in linesAsync)
         {
             if (!first)
             {

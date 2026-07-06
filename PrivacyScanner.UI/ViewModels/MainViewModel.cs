@@ -734,8 +734,8 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         }).ToList();
 
         // Count the warnings by type
-        int regexCount = items.Count(i => i.Type == ScanWarningType.Rule);
-        int spacyCount = items.Count(i => i.Type == ScanWarningType.SpaCy);
+        var regexCount = items.Count(i => i.Type == ScanWarningType.Rule);
+        var spacyCount = items.Count(i => i.Type == ScanWarningType.SpaCy);
 
         // CSV export (synchronized with the scan results)
         if (_csvExportService.IsExportActive)

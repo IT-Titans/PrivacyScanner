@@ -49,7 +49,7 @@ public class CheckPythonAndSpacyEnvironmentQueryHandler(IProcessService processS
                 $"ExitCode: {exitCode}, Error: {error}");
         }
 
-        string combinedOutput = (output + error).Trim();
+        var combinedOutput = (output + error).Trim();
         var versionMatch = Regex.Match(combinedOutput, @"Python 3\.12\.\d+");
         if (!versionMatch.Success)
         {
