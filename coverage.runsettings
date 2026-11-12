@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Coverage settings shared by local runs and the GitHub Actions workflow.
+
+  Two things are excluded, and the reasoning matters more than the list:
+
+  Generated source. Nobody here writes it and nobody can meaningfully test it.
+
+  WPF code-behind and the dialog service. A .xaml.cs partial exists to wire controls
+  that only exist once WPF has created a window, and DialogService calls straight into
+  WPF modal dialogs. Both are honestly untestable without driving a UI, and excluding
+  them is the only way the remaining figure says something true.
+
+  What is NOT excluded: ViewModels, converters and commands. Together they are the
+  large majority of PrivacyScanner.UI and they are ordinary classes. Leaving them out
+  would be the difference between a coverage figure and a flattering one.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+
+          <ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+
+          <ExcludeByFile>**/obj/**/*.cs,**/*.Designer.cs,**/*.g.cs,**/*.g.i.cs,**/*.generated.cs,**/*.xaml.cs,**/Services/DialogService.cs</ExcludeByFile>
+
+          <Exclude>[*.Tests]*</Exclude>
+
+          <SingleHit>false</SingleHit>
+          <UseSourceLink>false</UseSourceLink>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
