@@ -25,12 +25,14 @@ jobs:
     - name: Check Codestyle (dotnet format)
       run: dotnet format --verify-no-changes --verbosity diagnostic
 
-    - name: Install NBGV
-      run: dotnet tool install -g nbgv
+    # nbgv and ReportGenerator come from .config/dotnet-tools.json, at the versions
+    # recorded there, instead of whatever is newest on the day of the run.
+    - name: Restore .NET tools
+      run: dotnet tool restore
 
     - name: Set Version via NBGV
       id: nbgv
-      run: nbgv cloud
+      run: dotnet nbgv cloud
 
     - name: Compute Version with Build
       shell: bash
@@ -67,9 +69,7 @@ jobs:
       if: always()
 
     - name: Generate Coverage Report
-      run: |
-        dotnet tool install -g dotnet-reportgenerator-globaltool
-        reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:Html
+      run: dotnet reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:Html
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
