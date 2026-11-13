@@ -2,6 +2,9 @@
  
 PrivacyScanner is a .NET tool for scanning files for sensitive and personal data.
 Detection is done through **configurable regex patterns** and optionally via **SpaCy** (Natural Language Processing).
+
+**Status:** Maintained. No versioned release has been published yet, so the only way to run the tool
+today is to [build it from source](#build-and-run-from-source).
  
 > **Note:** PrivacyScanner was built by an apprentice at IT-Titans GmbH as part of
 > their professional training, with the assistance of AI coding tools during design and implementation. It should be
@@ -53,15 +56,18 @@ Additionally, SpaCy can optionally be used to automatically detect personal data
 ## Getting Started
  
 ### Run the prebuilt executable
- 
-Every successful build on `main` publishes a self-contained, single-file `Privacy Scanner.exe` (win-x64,
-no separate .NET install required) as a build artifact via the [CI/CD pipeline](.github/workflows/pipeline.yml).
-Download it, run it — regex-based scanning works immediately. If you also want SpaCy-based detection,
-follow [install.md](install.md) first.
+
+There is no prebuilt executable to download at the moment. The [CI/CD pipeline](.github/workflows/pipeline.yml)
+builds a self-contained, single-file `Privacy Scanner.exe` (win-x64, no separate .NET install required) on
+every run, but only as a build artifact: GitHub deletes those after 90 days, they need a GitHub login to
+download, and no release has been published yet. Until the first release, build from source as described
+below. Regex-based scanning then works immediately; for SpaCy-based detection follow
+[install.md](install.md) first.
  
 ### Build and run from source
  
-Requirements: **.NET 10 SDK** and **Windows 10/11** (the UI project is WPF, which is Windows-only).
+Requirements: **.NET 10 SDK** (10.0.404 or a later 10.0 release, pinned in [global.json](global.json))
+and **Windows 10/11** (the UI project is WPF, which is Windows-only).
  
 ```bash
 dotnet restore
@@ -74,8 +80,8 @@ Alternatively, open `PrivacyScanner.sln` in Visual Studio and run/debug `Privacy
 ### Running the tests
  
 ```bash
-dotnet test PrivacyScanner.Tests\PrivacyScanner.Tests.csproj
-dotnet test PrivacyScanner.Infrastructure.Tests\PrivacyScanner.Infrastructure.Tests.csproj
+dotnet test PrivacyScanner.Tests/PrivacyScanner.Tests.csproj
+dotnet test PrivacyScanner.Infrastructure.Tests/PrivacyScanner.Infrastructure.Tests.csproj
 ```
  
 > Note: both test projects run on every push/PR via the [CI/CD pipeline](.github/workflows/pipeline.yml).
@@ -182,9 +188,10 @@ PrivacyScanner/
 ├── PrivacyScanner.Infrastructure                # Command/query handlers, scan engine, SpaCy bridge
 ├── PrivacyScanner.UI                           # WPF (MVVM) application
 ├── PrivacyScanner.Tests                        # xUnit tests (run in CI)
-├── PrivacyScanner.Infrastructure.Tests         # xUnit tests (not yet run in CI)
+├── PrivacyScanner.Infrastructure.Tests         # xUnit tests (run in CI)
 ├── .github/workflows/pipeline.yml              # Build, format check, tests, publish
 ├── .editorconfig                               # Code style, enforced by Visual Studio/dotnet format
+├── global.json                                 # Pins the .NET SDK used to build
 ├── install.md                                  # Optional SpaCy setup instructions
 ├── PrivacyScanner.sln
 ```
@@ -193,4 +200,4 @@ PrivacyScanner/
  
 ## License
  
-Apache License 2.0
+Licensed under the [Apache License 2.0](LICENSE).
