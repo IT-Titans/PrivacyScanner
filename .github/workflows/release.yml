@@ -1,0 +1,136 @@
+name: Release
+run-name: Release ${{ github.ref_name }}
+
+# A version tag becomes a GitHub Release with the executable and its checksum attached.
+#
+#   git tag -a v1.2.0 -m "PrivacyScanner 1.2.0" <commit on main>
+#   git push origin v1.2.0
+#
+# Build artifacts of the pipeline are deleted after 90 days and need a GitHub login.
+# A release asset stays, and anyone can download it.
+#
+# The release is created as a draft. Look at the notes and the assets, then publish:
+#
+#   gh release edit v1.2.0 --draft=false
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+# Two runs for the same tag would race for the same release.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Builds, tests and packages with a read-only token. Restore and build run code from
+  # NuGet packages (analyzers, source generators, MSBuild tasks); none of it gets near
+  # a token that can write to the repository.
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      with:
+        fetch-depth: 0 # NBGV needs the history, the tag check needs origin/main
+        persist-credentials: false
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore .NET tools
+      run: dotnet tool restore
+
+    # Fails before anything is built if the tag is not vX.Y.Z, does not match
+    # version.json, or does not point into main.
+    - name: Check the tag against version.json and main
+      id: tag
+      env:
+        TAG: ${{ github.ref_name }}
+      run: ./scripts/Assert-ReleaseTag.ps1 -Tag $env:TAG
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build Solution
+      run: dotnet build --no-restore --configuration Release -p:TreatWarningsAsErrors=true -p:PublicRelease=true
+
+    # A release is not cut from a commit whose tests fail, whatever the pipeline said
+    # when the commit was merged.
+    - name: Run Unit Tests
+      run: dotnet test PrivacyScanner.sln --configuration Release --no-build --settings coverage.runsettings
+
+    - name: Publish UI Application
+      run: dotnet publish PrivacyScanner.UI/PrivacyScanner.UI.csproj -p:PublishProfile=OneExe -p:PublicRelease=true
+
+    - name: Prepare Release Assets
+      env:
+        VERSION: ${{ steps.tag.outputs.version }}
+      run: |
+        $assets = New-Item -ItemType Directory -Force -Path ./ReleaseAssets
+        $exe = "PrivacyScanner-$env:VERSION-win-x64.exe"
+
+        Copy-Item 'PrivacyScanner.UI/bin/Publish/ITTitans.PrivacyScanner.UI.exe' (Join-Path $assets $exe)
+        Copy-Item 'install.md' $assets
+
+        # "<hash>  <file>" with a line feed, the format sha256sum reads. The publish
+        # job checks the file with exactly that tool before it uploads anything.
+        $hash = (Get-FileHash (Join-Path $assets $exe) -Algorithm SHA256).Hash.ToLowerInvariant()
+        [System.IO.File]::WriteAllText((Join-Path $assets "$exe.sha256"), "$hash  $exe`n")
+
+        ./scripts/New-ReleaseNotes.ps1 -Version $env:VERSION -AssetName $exe -OutputPath (Join-Path $assets 'release-notes.md')
+
+        Get-ChildItem $assets | Format-Table Name, Length
+
+    - name: Upload Release Assets
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: release-assets
+        path: ./ReleaseAssets/
+        if-no-files-found: error
+        retention-days: 7
+
+  # The only job with a write token, and it runs no code from the repository: it
+  # downloads what "build" produced and hands it to the GitHub CLI.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+    - name: Download Release Assets
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      with:
+        name: release-assets
+        path: ./ReleaseAssets
+
+    - name: Verify the checksum
+      working-directory: ./ReleaseAssets
+      run: sha256sum --check --strict ./*.sha256
+
+    - name: Create the draft release
+      working-directory: ./ReleaseAssets
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.ref_name }}
+        VERSION: ${{ needs.build.outputs.version }}
+      run: |
+        gh release create "$TAG" \
+          --repo "$GITHUB_REPOSITORY" \
+          --verify-tag \
+          --draft \
+          --title "PrivacyScanner $VERSION" \
+          --notes-file release-notes.md \
+          "PrivacyScanner-$VERSION-win-x64.exe" \
+          "PrivacyScanner-$VERSION-win-x64.exe.sha256" \
+          install.md
