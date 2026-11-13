@@ -53,10 +53,11 @@ jobs:
     - name: Build Solution
       run: dotnet build --no-restore --configuration Release -p:TreatWarningsAsErrors=true
 
+    # One run over the whole solution, so a test project added later is picked up
+    # without anyone remembering to add a line here. coverage.runsettings keeps the
+    # local figure and this one comparable.
     - name: Run Unit Tests
-      run: |
-        dotnet test PrivacyScanner.Tests\PrivacyScanner.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
-        dotnet test PrivacyScanner.Infrastructure.Tests\PrivacyScanner.Infrastructure.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test_results_infrastructure.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+      run: dotnet test PrivacyScanner.sln --configuration Release --no-build --settings coverage.runsettings --logger "trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
