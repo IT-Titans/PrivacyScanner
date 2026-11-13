@@ -91,7 +91,8 @@ public class RelayCommandTests
     {
         var command = new RelayCommand(_ => { });
 
-        void Handler(object? sender, EventArgs args) { }
+        void Handler(object? sender, EventArgs args)
+        { }
 
         var subscribe = Record.Exception(() => command.CanExecuteChanged += Handler);
         var unsubscribe = Record.Exception(() => command.CanExecuteChanged -= Handler);
