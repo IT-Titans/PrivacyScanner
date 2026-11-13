@@ -81,8 +81,13 @@ jobs:
         path: ./TestResults/*.trx
       if: always()
 
+    # Every test project writes its own report and the reports overlap. ReportGenerator
+    # merges them: a line counts as covered if any test project reaches it. The merged
+    # Cobertura.xml is what the coverage job below checks.
     - name: Generate Coverage Report
-      run: dotnet reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:Html
+      run: |
+        dotnet reportgenerator "-reports:./TestResults/**/coverage.cobertura.xml" "-targetdir:./CoverageReport" "-reporttypes:Html;Cobertura;MarkdownSummaryGithub"
+        Get-Content ./CoverageReport/SummaryGithub.md | Add-Content $env:GITHUB_STEP_SUMMARY
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -90,6 +95,13 @@ jobs:
         name: coverage-report
         path: ./CoverageReport
       if: always()
+
+    - name: Upload Merged Cobertura Report
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: coverage-cobertura
+        path: ./CoverageReport/Cobertura.xml
+        if-no-files-found: error
 
     - name: Publish UI Application
       run: dotnet publish PrivacyScanner.UI\PrivacyScanner.UI.csproj /p:PublishProfile=OneExe
@@ -105,3 +117,45 @@ jobs:
       with:
         name: Privacy Scanner ${{ env.VERSION_WITH_BUILD }}
         path: ./Artifact/
+
+  # The coverage gate is its own job, and with it its own check, on purpose.
+  #
+  # "build" answers whether the change compiles, is formatted and passes its tests.
+  # "coverage" answers whether the repository meets the 90 % rule, for the total and
+  # for every assembly. As long as the code base is below 90 %, this job is red on
+  # every run. That is the true state and it stays visible, while "build" remains
+  # usable as a required check. Once main passes this job, add "coverage" to the
+  # required checks of the branch ruleset.
+  coverage:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      with:
+        persist-credentials: false
+        sparse-checkout: scripts
+
+    - name: Download Merged Cobertura Report
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      with:
+        name: coverage-cobertura
+        path: ./CoverageReport
+
+    # A gate that has never been seen failing is an assumption. This runs the gate
+    # against small reports with a known outcome before it is trusted with the real one.
+    - name: Verify that the gate can fail
+      shell: pwsh
+      run: ./scripts/Test-CoverageGate.ps1
+
+    # The four production assemblies are named so that one which drops out of the
+    # report fails the check instead of disappearing from it. A new production project
+    # belongs on this list in the commit that adds it.
+    - name: Check Line Coverage (90 % total and per assembly)
+      shell: pwsh
+      run: >
+        ./scripts/Check-Coverage.ps1
+        -ReportPath ./CoverageReport/Cobertura.xml
+        -Minimum 90
+        -RequiredAssembly 'ITTitans.PrivacyScanner.Infrastructure,ITTitans.PrivacyScanner.Infrastructure.Contracts,ITTitans.PrivacyScanner.Model,ITTitans.PrivacyScanner.UI'
