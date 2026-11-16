@@ -1,0 +1,86 @@
+# Dependabot version updates.
+#
+# Every update runs once a week and related packages arrive together, so the weekly
+# review is a handful of pull requests instead of one per package.
+#
+# The commit-message prefixes are not cosmetic: pull request titles in this repository
+# must follow Conventional Commits, and Dependabot's default title ("Bump X from A to B")
+# does not. With a prefix the title becomes "build(deps): bump X from A to B".
+#
+# There is no pip entry. The Python dependencies (spaCy and its German model) exist only
+# as install commands in install.md, and Dependabot needs a manifest it can read. Add
+# the entry together with a requirements.txt.
+
+version: 2
+
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      # Released together; a mixed pair is not a supported combination.
+      material-design:
+        patterns:
+          - "MaterialDesign*"
+      # The source generator emits code against one specific abstractions version.
+      mediator:
+        patterns:
+          - "Mediator.*"
+      serilog:
+        patterns:
+          - "Serilog"
+          - "Serilog.*"
+      # Same release cadence as the .NET servicing band.
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+      # The MSBuild package and the command line tool must agree on the version scheme.
+      versioning:
+        patterns:
+          - "Nerdbank.GitVersioning"
+          - "nbgv"
+      # Only reaches the test projects and the pipeline, never the shipped executable.
+      test-toolchain:
+        patterns:
+          - "xunit"
+          - "xunit.*"
+          - "Microsoft.NET.Test.Sdk"
+          - "coverlet.*"
+          - "Moq"
+          - "dotnet-reportgenerator-globaltool"
+
+  # Keeps the SDK version in global.json current.
+  - package-ecosystem: dotnet-sdk
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    commit-message:
+      prefix: build
+      include: scope
+
+  # Actions are pinned to commit SHAs; Dependabot moves the SHA and the version comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - "*"
