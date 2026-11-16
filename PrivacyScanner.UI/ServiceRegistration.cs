@@ -32,6 +32,9 @@ public static class ServiceRegistration
         services.AddSingleton<ISettingsPathProvider, SettingsPathProvider>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ICsvExportService, CsvExportService>();
+        services.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
+        services.AddSingleton<IFilePickerService, FilePickerService>();
+        services.AddSingleton<IFileLauncher, FileLauncher>();
         services.AddSingleton<MainViewModel>();
 
         services.AddLogging(builder =>

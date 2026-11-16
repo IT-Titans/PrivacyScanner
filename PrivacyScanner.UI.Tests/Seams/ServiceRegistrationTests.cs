@@ -36,12 +36,15 @@ public class ServiceRegistrationTests
     }
 
     [Fact]
-    public void TheContainerHandsOutTheProductionImplementations()
+    public void TheMainViewModelGetsTheProductionImplementationsOfTheSeams()
     {
         using var provider = new ServiceCollection().AddPrivacyScanner().BuildServiceProvider();
 
         Assert.NotNull(provider.GetRequiredService<MainViewModel>());
+        Assert.IsType<WpfUiDispatcher>(provider.GetRequiredService<IUiDispatcher>());
         Assert.IsType<DialogService>(provider.GetRequiredService<IDialogService>());
+        Assert.IsType<FilePickerService>(provider.GetRequiredService<IFilePickerService>());
+        Assert.IsType<FileLauncher>(provider.GetRequiredService<IFileLauncher>());
         Assert.IsType<SettingsPathProvider>(provider.GetRequiredService<ISettingsPathProvider>());
     }
 }
