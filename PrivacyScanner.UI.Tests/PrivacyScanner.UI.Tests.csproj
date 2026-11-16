@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>ITTitans.PrivacyScanner.UI.Tests</RootNamespace>
+        <AssemblyName>$(RootNamespace)</AssemblyName>
+        <!-- Must match PrivacyScanner.UI: a net10.0 project cannot reference a
+             net10.0-windows one, which is why the UI had no coverage at all. -->
+        <TargetFramework>$(TargetFramework)-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.collector">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Moq" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\PrivacyScanner.UI\PrivacyScanner.UI.csproj" />
+    </ItemGroup>
+</Project>
