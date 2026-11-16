@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
@@ -7,12 +8,11 @@ namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 /// <summary>
 /// Persists the directory blacklist to disk as JSON.
 /// </summary>
-public class SaveDirectoryBlacklistItemsStatesCommandHandler : IRequestHandler<SaveDirectoryBlacklistItemsStatesCommand>
+public class SaveDirectoryBlacklistItemsStatesCommandHandler(ISettingsPathProvider settingsPathProvider) : IRequestHandler<SaveDirectoryBlacklistItemsStatesCommand>
 {
     public async ValueTask<Unit> Handle(SaveDirectoryBlacklistItemsStatesCommand request, CancellationToken cancellationToken)
     {
-        var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-        var path = Path.Combine(commonPath, "PrivacyScanner");
+        var path = settingsPathProvider.GetSettingsDirectory();
 
         Directory.CreateDirectory(path);
 

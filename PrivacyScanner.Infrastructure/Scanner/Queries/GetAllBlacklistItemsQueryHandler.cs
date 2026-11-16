@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
@@ -10,16 +11,16 @@ namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 /// <summary>
 /// Loads the directory and file extension blacklists from disk, falling back to the built-in defaults.
 /// </summary>
-public class GetAllBlacklistItemsQueryHandler(ILogger<GetAllBlacklistItemsQueryHandler> logger) : IRequestHandler<GetAllBlacklistItemsQuery, GetAllBlacklistItemsQueryResult>
+public class GetAllBlacklistItemsQueryHandler(ILogger<GetAllBlacklistItemsQueryHandler> logger, ISettingsPathProvider settingsPathProvider) : IRequestHandler<GetAllBlacklistItemsQuery, GetAllBlacklistItemsQueryResult>
 {
     public async ValueTask<GetAllBlacklistItemsQueryResult> Handle(GetAllBlacklistItemsQuery request, CancellationToken cancellationToken)
     {
-        var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        var settingsDirectory = settingsPathProvider.GetSettingsDirectory();
 
-        var directoryItemsStorePath = Path.Combine(commonPath, "PrivacyScanner", "directoryBlacklists.json");
+        var directoryItemsStorePath = Path.Combine(settingsDirectory, "directoryBlacklists.json");
         var directoryBlacklistItems = await LoadDirectoryBlacklistItemsAsync(directoryItemsStorePath);
 
-        var fileExtensionsItemsStorePath = Path.Combine(commonPath, "PrivacyScanner", "fileExtensionBlacklists.json");
+        var fileExtensionsItemsStorePath = Path.Combine(settingsDirectory, "fileExtensionBlacklists.json");
         var fileExtensionsBlacklistItems = await LoadFileExtensionBlacklistItemsAsync(fileExtensionsItemsStorePath);
 
         return await new ValueTask<GetAllBlacklistItemsQueryResult>(new GetAllBlacklistItemsQueryResult()

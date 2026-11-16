@@ -21,8 +21,7 @@ public partial class App : Application
 
     public App()
     {
-        var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-        var path = Path.Combine(commonPath, "PrivacyScanner");
+        var path = new SettingsPathProvider().GetSettingsDirectory();
 
         Directory.CreateDirectory(path);
 
@@ -80,6 +79,7 @@ public partial class App : Application
         services.AddSingleton<IProcessService, ProcessService>();
         services.AddSingleton<IDirectoryProvider, DirectoryProvider>();
         services.AddSingleton<IScannerStateService, ScannerStateService>();
+        services.AddSingleton<ISettingsPathProvider, SettingsPathProvider>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ICsvExportService, CsvExportService>();
         services.AddSingleton<MainWindow>();

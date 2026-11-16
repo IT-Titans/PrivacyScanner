@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
 using ITTitans.PrivacyScanner.Model;
 using Mediator;
@@ -10,12 +11,11 @@ namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Queries;
 /// <summary>
 /// Merges the built-in default regex rules with the user's saved rules, letting saved rules override defaults by <c>RuleId</c>.
 /// </summary>
-public class GetAllRegexRulesQueryHandler(ILogger<GetAllRegexRulesQueryHandler> logger) : IRequestHandler<GetAllRegexRulesQuery, GetAllRegexRulesQueryResult>
+public class GetAllRegexRulesQueryHandler(ILogger<GetAllRegexRulesQueryHandler> logger, ISettingsPathProvider settingsPathProvider) : IRequestHandler<GetAllRegexRulesQuery, GetAllRegexRulesQueryResult>
 {
     public async ValueTask<GetAllRegexRulesQueryResult> Handle(GetAllRegexRulesQuery request, CancellationToken cancellationToken)
     {
-        var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-        var path = Path.Combine(commonPath, "PrivacyScanner", "rules.json");
+        var path = Path.Combine(settingsPathProvider.GetSettingsDirectory(), "rules.json");
 
         var userRules = await LoadUserRulesAsync(path);
         var defaultRules = DefaultRegexRulesProvider.GetDefaultRules();
