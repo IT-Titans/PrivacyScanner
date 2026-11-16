@@ -121,3 +121,8 @@ if ($failed -gt 0) {
 }
 
 'The coverage gate fails and passes where it should.'
+
+# The last gate run above ends with a non-zero exit code on purpose. Without an explicit
+# exit the runner's shell wrapper passes that code on and the step fails although every
+# case passed.
+exit 0
