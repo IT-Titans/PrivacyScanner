@@ -47,7 +47,7 @@ public class DefaultBlacklistItemsProviderI3Tests
         Assert.All(extensions, e => Assert.StartsWith(".", e));
     }
 
-    [Fact(Skip = "Suspected defect V1: the default entry '.g.cs' never matches. GetAllFilePathsInDirectoryQueryHandler.cs:52 compares Path.GetExtension, which yields '.cs' for 'Foo.g.cs'. Enable once decided.")]
+    [Fact]
     public async Task DefaultExtensionGCs_ExcludesGeneratedSourceFiles()
     {
         var root = Path.Combine(Path.GetTempPath(), "root");
