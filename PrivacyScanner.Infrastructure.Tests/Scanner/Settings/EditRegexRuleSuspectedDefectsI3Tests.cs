@@ -9,8 +9,7 @@ using Xunit;
 namespace ITTitans.PrivacyScanner.Infrastructure.Tests.Scanner.Settings;
 
 /// <summary>
-/// The correct behaviour of editing a rule where the current handler is suspected to be wrong. Skipped until the
-/// decision on the suspected defect is made; they are written against the behaviour the user expects.
+/// Editing a rule: the pattern is validated like on adding, and the enabled state survives the edit.
 /// </summary>
 public class EditRegexRuleSuspectedDefectsI3Tests
 {
@@ -28,7 +27,10 @@ public class EditRegexRuleSuspectedDefectsI3Tests
         return (new EditRegexRuleCommandHandler(mediator.Object), mediator, original);
     }
 
-    [Fact(Skip = "Suspected defect V3: EditRegexRuleCommandHandler.cs:14-68 does not validate the pattern, only the add handler does. An invalid pattern is saved and later skipped silently by the scan.")]
+    private static List<RegexRuleDto> Saved(Mock<IMediator> mediator) =>
+        mediator.Invocations.Select(i => i.Arguments[0]).OfType<SaveRegexRulesCommand>().Single().RegexRuleDtos;
+
+    [Fact]
     public async Task Edit_InvalidPattern_IsRejectedAndNothingIsSaved()
     {
         var (sut, mediator, original) = Create();
@@ -41,18 +43,67 @@ public class EditRegexRuleSuspectedDefectsI3Tests
         mediator.Verify(m => m.Send(It.IsAny<SaveRegexRulesCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [Fact(Skip = "Suspected defect (analysis of 06.11.2026, section 5.7): EditRegexRuleCommandHandler.cs:30-35, 42-47, 54-59 build the edited rule without IsEnabled, so a disabled rule becomes enabled again.")]
+    [Fact]
     public async Task Edit_KeepsTheEnabledFlagOfADisabledRule()
     {
         var (sut, mediator, original) = Create(isEnabled: false);
-        List<RegexRuleDto>? saved = null;
-        mediator
-            .Setup(m => m.Send(It.IsAny<SaveRegexRulesCommand>(), It.IsAny<CancellationToken>()))
-            .Callback((SaveRegexRulesCommand c, CancellationToken _) => saved = c.RegexRuleDtos)
-            .Returns(new ValueTask<Unit>(Unit.Value));
 
         await sut.Handle(new EditRegexRuleCommand { RuleId = original.RuleId, RuleName = "Umbenannt" }, CancellationToken.None);
 
-        Assert.False(Assert.Single(saved!).IsEnabled);
+        Assert.False(Assert.Single(Saved(mediator)).IsEnabled);
+    }
+
+    [Theory]
+    [InlineData("(unbalanced")]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Edit_InvalidOrBlankPattern_ReturnsGermanErrorMessage(string pattern)
+    {
+        var (sut, mediator, original) = Create();
+
+        var result = await sut.Handle(
+            new EditRegexRuleCommand { RuleId = original.RuleId, RuleName = "Neu", Rule = pattern },
+            CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Der eingegebene Regex ist ungültig", result.ErrorMessage);
+        mediator.Verify(m => m.Send(It.IsAny<SaveRegexRulesCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Edit_ValidPattern_IsSaved()
+    {
+        var (sut, mediator, original) = Create();
+
+        var result = await sut.Handle(
+            new EditRegexRuleCommand { RuleId = original.RuleId, Rule = @"[a-z]+" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(@"[a-z]+", Assert.Single(Saved(mediator)).Rule);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task Edit_KeepsEnabledFlagAndOtherFields_InEveryBranch(bool changeName, bool changePattern)
+    {
+        var (sut, mediator, original) = Create(isEnabled: false);
+
+        await sut.Handle(
+            new EditRegexRuleCommand
+            {
+                RuleId = original.RuleId,
+                RuleName = changeName ? "Umbenannt" : null,
+                Rule = changePattern ? @"\w+" : null
+            },
+            CancellationToken.None);
+
+        var edited = Assert.Single(Saved(mediator));
+        Assert.False(edited.IsEnabled);
+        Assert.Equal(original.RuleId, edited.RuleId);
+        Assert.Equal(changeName ? "Umbenannt" : "Original", edited.RuleName);
+        Assert.Equal(changePattern ? @"\w+" : @"\d+", edited.Rule);
     }
 }
