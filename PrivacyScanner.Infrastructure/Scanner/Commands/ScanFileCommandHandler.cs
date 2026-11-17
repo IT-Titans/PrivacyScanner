@@ -24,7 +24,7 @@ public class ScanFileCommandHandler(IMediator mediator, ILogger<ScanFileCommandH
 
                 warnings.AddRange(spaCyScanResult.Warnings);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex, "Fehler beim SpaCy-Scan für {FilePath}", request.FilePath.FullName);
             }
@@ -40,7 +40,7 @@ public class ScanFileCommandHandler(IMediator mediator, ILogger<ScanFileCommandH
 
                 warnings.AddRange(regexScanResult.Warnings);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex, "Fehler beim Regex-Scan für {FilePath}", request.FilePath.FullName);
             }

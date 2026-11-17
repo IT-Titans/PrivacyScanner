@@ -69,6 +69,29 @@ public class SpaCyScanCommandHandlerEnvironmentTests : IDisposable
     }
 
     [Fact]
+    public async Task Handle_Cancelled_PropagatesAndLogsNoError()
+    {
+        var logger = new Mock<ILogger<SpaCyScanCommandHandler>>();
+        var sut = new SpaCyScanCommandHandler(_processService.Object, logger.Object);
+        var input = CreateInput();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await sut.Handle(new SpaCyScanCommand { FilePath = input }, cts.Token));
+
+        logger.Verify(
+            l => l.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Never);
+        _processService.Verify(p => p.RunCommandAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
     public async Task Handle_ExistingFile_RunsPythonLauncherWithScriptAndQuotedFilePath()
     {
         var input = CreateInput();
