@@ -25,6 +25,12 @@ updates:
     commit-message:
       prefix: build
       include: scope
+    # These packages follow the .NET major version and move together with the target
+    # framework. A jump to the next major is a migration, not a routine update.
+    ignore:
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types:
+          - version-update:semver-major
     groups:
       # Released together; a mixed pair is not a supported combination.
       material-design:
@@ -68,6 +74,11 @@ updates:
     commit-message:
       prefix: build
       include: scope
+    # A new SDK major is decided together with the target framework, not by a weekly update.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
 
   # Actions are pinned to commit SHAs; Dependabot moves the SHA and the version comment.
   - package-ecosystem: github-actions
