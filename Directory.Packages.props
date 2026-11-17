@@ -3,8 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="MaterialDesignColors" Version="5.3.1" />
-    <PackageVersion Include="MaterialDesignThemes" Version="5.3.1" />
+    <PackageVersion Include="MaterialDesignColors" Version="5.4.0" />
+    <PackageVersion Include="MaterialDesignThemes" Version="5.4.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.6" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
