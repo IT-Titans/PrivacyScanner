@@ -86,7 +86,7 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
             }
 
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Exception in SpaCyScanCommandHandler");
         }

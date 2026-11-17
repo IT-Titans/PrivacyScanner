@@ -123,7 +123,7 @@ public class ScanFileCommandHandlerTests
             Times.Once);
     }
 
-    [Fact(Skip = "Suspected defect from the analysis of 2026-11-06 (ScanFileCommandHandler.cs:27 and :43): catch (Exception) swallows OperationCanceledException, so a stop request during a file scan is logged as an error instead of ending the scan. The test states the correct behaviour; enable it once the behaviour is decided.")]
+    [Fact]
     public async Task Handle_Cancellation_IsNotSwallowed()
     {
         SetupSpacy(Warning("spacy"));
@@ -133,6 +133,45 @@ public class ScanFileCommandHandlerTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Handle(useSpacy: true, rules: [Rule()]));
     }
+
+    [Fact]
+    public async Task Handle_RegexCancelled_PropagatesAndLogsNoError()
+    {
+        SetupSpacy(Warning("spacy"));
+        _mediatorMock
+            .Setup(m => m.Send(It.IsAny<RegexScanCommand>(), It.IsAny<CancellationToken>()))
+            .Throws(new TaskCanceledException());
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Handle(useSpacy: true, rules: [Rule()]));
+
+        VerifyNoErrorLogged();
+    }
+
+    [Fact]
+    public async Task Handle_SpacyCancelled_PropagatesWithoutRunningRegexAndLogsNoError()
+    {
+        _mediatorMock
+            .Setup(m => m.Send(It.IsAny<SpaCyScanCommand>(), It.IsAny<CancellationToken>()))
+            .Throws(new OperationCanceledException());
+        SetupRegex(Warning("regex"));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Handle(useSpacy: true, rules: [Rule()]));
+
+        _mediatorMock.Verify(
+            m => m.Send(It.IsAny<RegexScanCommand>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        VerifyNoErrorLogged();
+    }
+
+    private void VerifyNoErrorLogged() =>
+        _loggerMock.Verify(
+            l => l.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Never);
 
     private Task<ScanResultDto> Handle(bool useSpacy, List<RegexRuleDto>? rules)
     {
