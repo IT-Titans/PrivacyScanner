@@ -454,6 +454,27 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnStartScan()
     {
+        // The export file is prepared first: if that fails, nothing of the UI has changed yet.
+        if (!string.IsNullOrEmpty(ExportFilePath))
+        {
+            try
+            {
+                _csvExportService.InitializeExport(ExportFilePath);
+                _logger.LogInformation("CSV-Export gestartet: {FilePath}", ExportFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fehler beim Initialisieren des CSV-Exports: {FilePath}", ExportFilePath);
+                _csvExportService.Close();
+                StatusText = "Scan nicht gestartet";
+                _dialogService.ShowError(
+                    $"Der Scan wurde nicht gestartet, weil die Export-Datei nicht vorbereitet werden konnte: {ex.Message}\n\n" +
+                    "Bitte korrigieren Sie den Pfad oder entfernen Sie die Export-Datei und starten Sie den Scan erneut.",
+                    "Fehler");
+                return;
+            }
+        }
+
         Progress = 0;
         ScannedFilesCount = 0;
         TotalFilesCount = 0;
@@ -488,19 +509,6 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         TotalPages = 1;
         _wasScanCancelled = false;
         IsProgressIndeterminate = true;
-
-        if (!string.IsNullOrEmpty(ExportFilePath))
-        {
-            try
-            {
-                _csvExportService.InitializeExport(ExportFilePath);
-                _logger.LogInformation("CSV-Export gestartet: {FilePath}", ExportFilePath);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Fehler beim Initialisieren des CSV-Exports: {FilePath}", ExportFilePath);
-            }
-        }
 
         ScanCompletion = Task.Run(async () =>
         {

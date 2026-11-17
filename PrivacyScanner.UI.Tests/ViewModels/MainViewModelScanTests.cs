@@ -271,19 +271,82 @@ public class MainViewModelScanTests
         harness.CsvExport.Verify(c => c.InitializeExport(It.IsAny<string>()), Times.Never);
     }
 
-    [Fact]
-    public async Task AFailingExportInitialisationDoesNotStopTheScan()
+    private const string ExportErrorText =
+        "Der Scan wurde nicht gestartet, weil die Export-Datei nicht vorbereitet werden konnte: locked\n\n" +
+        "Bitte korrigieren Sie den Pfad oder entfernen Sie die Export-Datei und starten Sie den Scan erneut.";
+
+    private static async Task<MainViewModelHarness> WithFailedExportStartAsync()
     {
-        // Pins the current behaviour: the failure is only logged and the scan runs without export.
-        // That the user is not told is suspected defect V5, see the work package, section 5.7.
         var harness = await ReadyAsync();
         harness.ViewModel.ExportFilePath = @"C:\Out\locked.csv";
-        harness.CsvExport.Setup(c => c.InitializeExport(It.IsAny<string>())).Throws(new IOException("locked"));
+        harness.CsvExport.Setup(c => c.InitializeExport(@"C:\Out\locked.csv")).Throws(new IOException("locked"));
 
         harness.ViewModel.StartScanCommand.Execute(null);
         await harness.ViewModel.ScanCompletion;
 
+        return harness;
+    }
+
+    [Fact]
+    public async Task AFailingExportInitialisationDoesNotStartTheScan()
+    {
+        var harness = await WithFailedExportStartAsync();
+
+        harness.Mediator.Verify(m => m.Send(It.IsAny<StartScannerCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AFailingExportInitialisationShowsTheReasonOnce()
+    {
+        var harness = await WithFailedExportStartAsync();
+
+        harness.Dialogs.Verify(d => d.ShowError(ExportErrorText, "Fehler"), Times.Once);
+        harness.Dialogs.Verify(d => d.ShowError(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AFailingExportInitialisationLeavesTheUiIdleAndReleasesTheExport()
+    {
+        var harness = await WithFailedExportStartAsync();
+
+        var vm = harness.ViewModel;
+        Assert.False(vm.IsScanning);
+        Assert.False(vm.IsProgressIndeterminate);
+        Assert.Equal(0, vm.Progress);
+        Assert.Equal("Scan nicht gestartet", vm.StatusText);
+        Assert.Equal("Scan starten", vm.ScanButtonText);
+        Assert.Equal("Play", vm.ScanButtonIcon);
+        Assert.True(vm.IsConfigurationEnabled);
+        Assert.True(vm.StartScanCommand.CanExecute(null));
+        harness.CsvExport.Verify(c => c.Close(), Times.Once);
+    }
+
+    [Fact]
+    public async Task AScanStartsAfterTheExportFileWasCleared()
+    {
+        var harness = await WithFailedExportStartAsync();
+
+        harness.ViewModel.ClearExportFileCommand.Execute(null);
+        harness.ViewModel.StartScanCommand.Execute(null);
+        await harness.ViewModel.ScanCompletion;
+
         harness.Mediator.Verify(m => m.Send(It.IsAny<StartScannerCommand>(), It.IsAny<CancellationToken>()), Times.Once);
+        harness.CsvExport.Verify(c => c.InitializeExport(It.IsAny<string>()), Times.Once);
+        Assert.Equal("Scan abgeschlossen", harness.ViewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task AScanStartsAfterTheExportPathWasCorrected()
+    {
+        var harness = await WithFailedExportStartAsync();
+
+        harness.ViewModel.ExportFilePath = @"C:\Out\free.csv";
+        harness.ViewModel.StartScanCommand.Execute(null);
+        await harness.ViewModel.ScanCompletion;
+
+        harness.CsvExport.Verify(c => c.InitializeExport(@"C:\Out\free.csv"), Times.Once);
+        harness.Mediator.Verify(m => m.Send(It.IsAny<StartScannerCommand>(), It.IsAny<CancellationToken>()), Times.Once);
+        harness.Dialogs.Verify(d => d.ShowError(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         Assert.False(harness.ViewModel.IsScanning);
     }
 
