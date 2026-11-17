@@ -46,7 +46,7 @@ internal static class ScanEngineLoggerExtensions
             l => l.Log(
                 level,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((state, _) => state.ToString()!.Contains(messagePart, StringComparison.Ordinal)),
+                It.Is<It.IsAnyType>((state, _) => state != null && state.ToString()!.Contains(messagePart, StringComparison.Ordinal)),
                 It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             times);
