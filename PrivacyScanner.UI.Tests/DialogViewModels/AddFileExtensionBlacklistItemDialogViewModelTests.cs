@@ -12,11 +12,6 @@ namespace ITTitans.PrivacyScanner.UI.Tests.DialogViewModels;
 /// <summary>
 /// Covers the dialog that adds a file extension to the scan blacklist.
 /// </summary>
-/// <remarks>
-/// The Extension setter prepends a dot to every value without one, including the empty
-/// string (suspected defect V2 in the work package). The two tests that would otherwise
-/// pin that behaviour are written for the correct behaviour and skipped until it is decided.
-/// </remarks>
 public class AddFileExtensionBlacklistItemDialogViewModelTests
 {
     private readonly Mock<IMediator> _mediator = new();
@@ -54,6 +49,62 @@ public class AddFileExtensionBlacklistItemDialogViewModelTests
         sut.Extension = input;
 
         Assert.Equal(expected, sut.Extension);
+    }
+
+    [Theory]
+    [InlineData("..log", ".log")]
+    [InlineData("...tar.gz", ".tar.gz")]
+    [InlineData("  log  ", ".log")]
+    [InlineData(" .log", ".log")]
+    [InlineData(". log", ".log")]
+    [InlineData("LOG", ".LOG")]
+    [InlineData(".Log", ".Log")]
+    public void ExtensionIsTrimmedAndKeepsItsCase(string input, string expected)
+    {
+        var sut = CreateSut();
+        sut.Extension = input;
+
+        Assert.Equal(expected, sut.Extension);
+    }
+
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    [InlineData(" ")]
+    [InlineData(" . ")]
+    [InlineData("")]
+    public void InputWithoutNameStaysEmptyAndCannotBeAdded(string input)
+    {
+        var sut = CreateSut();
+        sut.Extension = input;
+
+        Assert.Equal(string.Empty, sut.Extension);
+        Assert.False(sut.AddCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ALoneDotInAnEmptyFieldRaisesPropertyChangedSoTheTextBoxIsReset()
+    {
+        var sut = CreateSut();
+        var raised = 0;
+        sut.PropertyChanged += (_, e) => raised += e.PropertyName == nameof(sut.Extension) ? 1 : 0;
+
+        sut.Extension = ".";
+
+        Assert.Equal(1, raised);
+    }
+
+    [Fact]
+    public void TypingADotThenTheNameYieldsTheDottedExtension()
+    {
+        var sut = CreateSut();
+
+        foreach (var typed in new[] { ".", ".l", ".lo", ".log" })
+        {
+            sut.Extension = typed;
+        }
+
+        Assert.Equal(".log", sut.Extension);
     }
 
     [Fact]
@@ -151,7 +202,7 @@ public class AddFileExtensionBlacklistItemDialogViewModelTests
         CreateSut().CancelCommand.Execute(null);
     }
 
-    [Fact(Skip = "Suspected defect V2 (AddFileExtensionBlacklistItemDialogViewModel.cs:24): clearing the field leaves '.', not an empty string. Unskip once the setter is decided.")]
+    [Fact]
     public void ClearingTheFieldLeavesItEmpty()
     {
         var sut = CreateSut();
@@ -162,7 +213,7 @@ public class AddFileExtensionBlacklistItemDialogViewModelTests
         Assert.Equal(string.Empty, sut.Extension);
     }
 
-    [Fact(Skip = "Suspected defect V2 (AddFileExtensionBlacklistItemDialogViewModel.cs:57): after a successful add the field holds '.', so Add stays enabled. Unskip once the setter is decided.")]
+    [Fact]
     public async Task AfterASuccessfulAddTheFieldIsEmptyAndAddIsDisabled()
     {
         SetupSuccess();
