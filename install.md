@@ -5,6 +5,14 @@ built-in regex rules without any of this installed. These steps are only require
 the "Use SpaCy" checkbox in the application to additionally detect names, locations, and organizations
 in free text.
 
+> **The downloaded executable is not code-signed.** On first start Windows SmartScreen may show
+> "Windows protected your PC". Compare the SHA-256 of the file you downloaded with the value in the
+> `.sha256` file of the same release, then choose *More info* and *Run anyway*:
+>
+> ```powershell
+> (Get-FileHash '.\PrivacyScanner-<version>-win-x64.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+> ```
+
 > **Why the exact steps matter:** PrivacyScanner invokes Python through the Windows `py` launcher
 > (`py --version`, `py -3.12 -m ...`), not the plain `python` command. If more than one Python version
 > is installed, `py` may resolve to a different (newer) version by default, and packages installed via

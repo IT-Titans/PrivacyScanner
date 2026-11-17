@@ -6,7 +6,7 @@ Detection is done through **configurable regex patterns** and optionally via **S
 **Status:** Maintained. No versioned release has been published yet, so the only way to run the tool
 today is to [build it from source](#build-and-run-from-source).
  
-> **Note:** PrivacyScanner was built by an apprentice at IT-Titans GmbH as part of
+> **Note:** PrivacyScanner was built by an apprentice at IT Titans GmbH as part of
 > their professional training, with the assistance of AI coding tools during design and implementation. It should be
 > read as a learning and training project rather than an audited, production-hardened compliance product. In
 > particular, detection results (regex and SpaCy) are a starting point for manual review, not a guarantee of
