@@ -100,7 +100,7 @@ public class MainViewModelStateDialogAndBlacklistTests
         Assert.Equal(1, harness.ViewModel.SelectedFileExtensionBlacklistItem);
     }
 
-    [Fact(Skip = "Suspected defect V10 (MainViewModel.cs:606 and :610): after a cancelled dialog the selection jumps to the last entry. The correct behaviour is that it stays where it was.")]
+    [Fact]
     public async Task ACancelledDirectoryDialogLeavesTheSelectionWhereItWas()
     {
         var harness = new MainViewModelHarness();
@@ -113,7 +113,7 @@ public class MainViewModelStateDialogAndBlacklistTests
         Assert.Equal(1, harness.ViewModel.SelectedDirectoryBlacklistItem);
     }
 
-    [Fact(Skip = "Suspected defect V10 (MainViewModel.cs:637 and :641): after a cancelled dialog the selection jumps to the last entry. The correct behaviour is that it stays where it was.")]
+    [Fact]
     public async Task ACancelledFileExtensionDialogLeavesTheSelectionWhereItWas()
     {
         var harness = new MainViewModelHarness();

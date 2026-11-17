@@ -345,8 +345,15 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         {
             if (SetProperty(ref _pageSize, value))
             {
+                var wasOnFirstPage = CurrentPage == 1;
                 CurrentPage = 1;
-                UpdatePagedLogTreeNodes();
+
+                // On page one the assignment above changes nothing, so refresh the page explicitly.
+                if (wasOnFirstPage)
+                {
+                    _pagedLogTreeNodes.Clear();
+                    UpdatePagedLogTreeNodes();
+                }
             }
         }
     }
@@ -603,11 +610,17 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
         dialogViewModel.RequestClose += () => _dialogService.CloseDialog("RootDialog");
 
+        var countBefore = DirectoryBlacklistItems.Count;
+        var selectionBefore = SelectedDirectoryBlacklistItem;
+
         await _dialogService.ShowDialogAsync(dialogViewModel, "RootDialog");
 
         await LoadBlacklistItemsAsync();
 
-        SelectedDirectoryBlacklistItem = DirectoryBlacklistItems.Count - 1;
+        // Select the new entry only if one was added; a cancelled dialog keeps the selection.
+        SelectedDirectoryBlacklistItem = DirectoryBlacklistItems.Count > countBefore
+            ? DirectoryBlacklistItems.Count - 1
+            : selectionBefore;
     }
 
     private async void OnRemoveSelectedDirectoryBlacklistItem()
@@ -630,11 +643,17 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
         dialogViewModel.RequestClose += () => _dialogService.CloseDialog("RootDialog");
 
+        var countBefore = FileExtensionBlacklistItems.Count;
+        var selectionBefore = SelectedFileExtensionBlacklistItem;
+
         await _dialogService.ShowDialogAsync(dialogViewModel, "RootDialog");
 
         await LoadBlacklistItemsAsync();
 
-        SelectedFileExtensionBlacklistItem = FileExtensionBlacklistItems.Count - 1;
+        // Select the new entry only if one was added; a cancelled dialog keeps the selection.
+        SelectedFileExtensionBlacklistItem = FileExtensionBlacklistItems.Count > countBefore
+            ? FileExtensionBlacklistItems.Count - 1
+            : selectionBefore;
     }
 
     private async void OnRemoveSelectedFileExtensionBlacklistItem()
