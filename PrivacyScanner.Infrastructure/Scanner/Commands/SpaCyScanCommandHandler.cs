@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
@@ -99,37 +98,16 @@ public class SpaCyScanCommandHandler : IRequestHandler<SpaCyScanCommand, ScanRes
     }
 
 
-    private async Task<string> GetScriptPathAsync(CancellationToken cancellationToken)
+    private static Task<string> GetScriptPathAsync(CancellationToken cancellationToken)
     {
         var assembly = typeof(SpaCyScanCommandHandler).Assembly;
-        var assemblyLocation = Path.GetDirectoryName(assembly.Location);
 
-        // If not running in single-file mode, the file might be in the Resources folder
-        if (!string.IsNullOrEmpty(assemblyLocation))
-        {
-            var localPath = Path.Combine(assemblyLocation, "Resources", "spacy_scan.py");
-            if (File.Exists(localPath))
-                return localPath;
-        }
-
-        // Otherwise extract from embedded resources
-        var tempPath = Path.Combine(Path.GetTempPath(), "PrivacyScanner");
-        Directory.CreateDirectory(tempPath);
-        var scriptPath = Path.Combine(tempPath, "spacy_scan.py");
-
-        // Always extract to ensure we have the latest version
-        const string resourceName = "ITTitans.PrivacyScanner.Infrastructure.Resources.spacy_scan.py";
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-        if (stream == null)
-        {
-            var availableResources = string.Join(", ", assembly.GetManifestResourceNames());
-            throw new FileNotFoundException($"Die eingebettete Ressource '{resourceName}' wurde nicht gefunden. Verfügbare Ressourcen: {availableResources}");
-        }
-
-        using var fileStream = File.Create(scriptPath);
-        await stream.CopyToAsync(fileStream, cancellationToken);
-
-        return scriptPath;
+        return SpaCyScriptLocator.GetScriptPathAsync(
+            assembly,
+            Path.GetDirectoryName(assembly.Location),
+            Path.Combine(Path.GetTempPath(), "PrivacyScanner"),
+            SpaCyScriptLocator.ResourceName,
+            cancellationToken);
     }
 
     private class SpacyResult
