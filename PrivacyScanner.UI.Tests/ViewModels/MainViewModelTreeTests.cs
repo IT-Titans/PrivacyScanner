@@ -190,7 +190,7 @@ public class MainViewModelTreeTests
         Assert.Equal(3, vm.PagedLogTreeNodes.Count);
     }
 
-    [Fact(Skip = "Suspected defect V11 (work package 5.7): shrinking PageSize on page 1 leaves the old, longer list displayed. Enable once decided.")]
+    [Fact]
     public async Task ShrinkingThePageSizeOnPageOneShortensTheDisplayedList()
     {
         var harness = new MainViewModelHarness();
@@ -204,6 +204,72 @@ public class MainViewModelTreeTests
 
         Assert.Equal(2, vm.PagedLogTreeNodes.Count);
         Assert.Equal(3, vm.TotalPages);
+    }
+
+    [Fact]
+    public async Task ShrinkingThePageSizeOnPageOneKeepsTheFirstEntries()
+    {
+        var harness = new MainViewModelHarness();
+        var vm = harness.ViewModel;
+        for (var i = 1; i <= 5; i++)
+        {
+            await vm.Handle(Found($@"C:\Daten\f{i}.txt", 1), default);
+        }
+
+        vm.PageSize = 2;
+
+        Assert.Equal(1, vm.CurrentPage);
+        Assert.Equal([@"C:\Daten\f1.txt", @"C:\Daten\f2.txt"], FullPaths(vm));
+    }
+
+    [Fact]
+    public async Task EnlargingThePageSizeOnPageOneShowsTheLongerList()
+    {
+        var harness = new MainViewModelHarness();
+        var vm = harness.ViewModel;
+        vm.PageSize = 2;
+        for (var i = 1; i <= 5; i++)
+        {
+            await vm.Handle(Found($@"C:\Daten\f{i}.txt", 1), default);
+        }
+
+        vm.PageSize = 4;
+
+        Assert.Equal(1, vm.CurrentPage);
+        Assert.Equal(2, vm.TotalPages);
+        Assert.Equal(4, vm.PagedLogTreeNodes.Count);
+    }
+
+    [Fact]
+    public async Task ShrinkingThePageSizeOnALaterPageReturnsToPageOneWithTheShorterList()
+    {
+        var harness = new MainViewModelHarness();
+        var vm = harness.ViewModel;
+        vm.PageSize = 4;
+        for (var i = 1; i <= 7; i++)
+        {
+            await vm.Handle(Found($@"C:\Daten\f{i}.txt", 1), default);
+        }
+
+        vm.CurrentPage = 2;
+        vm.PageSize = 2;
+
+        Assert.Equal(1, vm.CurrentPage);
+        Assert.Equal(4, vm.TotalPages);
+        Assert.Equal([@"C:\Daten\f1.txt", @"C:\Daten\f2.txt"], FullPaths(vm));
+    }
+
+    [Fact]
+    public void ChangingThePageSizeWithoutResultsKeepsOneEmptyPage()
+    {
+        var harness = new MainViewModelHarness();
+        var vm = harness.ViewModel;
+
+        vm.PageSize = 2;
+
+        Assert.Equal(1, vm.CurrentPage);
+        Assert.Equal(1, vm.TotalPages);
+        Assert.Empty(vm.PagedLogTreeNodes);
     }
 
     [Fact]

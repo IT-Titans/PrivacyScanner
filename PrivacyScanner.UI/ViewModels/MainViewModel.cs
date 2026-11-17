@@ -345,8 +345,15 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         {
             if (SetProperty(ref _pageSize, value))
             {
+                var wasOnFirstPage = CurrentPage == 1;
                 CurrentPage = 1;
-                UpdatePagedLogTreeNodes();
+
+                // On page one the assignment above changes nothing, so refresh the page explicitly.
+                if (wasOnFirstPage)
+                {
+                    _pagedLogTreeNodes.Clear();
+                    UpdatePagedLogTreeNodes();
+                }
             }
         }
     }
