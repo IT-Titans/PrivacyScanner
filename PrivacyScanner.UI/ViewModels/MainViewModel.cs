@@ -1037,18 +1037,27 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     {
         var queryResult = await _mediator.Send(new GetAllBlacklistItemsQuery());
 
-        DirectoryBlacklistItems.Clear();
-        FileExtensionBlacklistItems.Clear();
-
-        DirectoryBlacklistItems.AddRange(queryResult.DirectoryBlacklistItems.Select(i => new DirectoryBlacklistItemViewModel()
+        // Rebuild a list only if its content changed. Clearing a list drops the selection bound to it,
+        // so a reload after a dialog must not touch the list the dialog was not about.
+        var directoryNames = queryResult.DirectoryBlacklistItems.Select(i => i.DirectoryName).ToList();
+        if (!DirectoryBlacklistItems.Select(i => i.DirectoryName).SequenceEqual(directoryNames))
         {
-            DirectoryName = i.DirectoryName,
-        }));
+            DirectoryBlacklistItems.Clear();
+            DirectoryBlacklistItems.AddRange(directoryNames.Select(n => new DirectoryBlacklistItemViewModel()
+            {
+                DirectoryName = n,
+            }));
+        }
 
-        FileExtensionBlacklistItems.AddRange(queryResult.FileExtensionBlacklistItems.Select(i => new FileExtensionBlacklistItemViewModel()
+        var extensions = queryResult.FileExtensionBlacklistItems.Select(i => i.Extension).ToList();
+        if (!FileExtensionBlacklistItems.Select(i => i.Extension).SequenceEqual(extensions))
         {
-            Extension = i.Extension,
-        }));
+            FileExtensionBlacklistItems.Clear();
+            FileExtensionBlacklistItems.AddRange(extensions.Select(e => new FileExtensionBlacklistItemViewModel()
+            {
+                Extension = e,
+            }));
+        }
 
         RaiseCanExecuteChanged();
     }

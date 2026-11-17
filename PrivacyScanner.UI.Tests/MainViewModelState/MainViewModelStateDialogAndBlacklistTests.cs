@@ -126,6 +126,75 @@ public class MainViewModelStateDialogAndBlacklistTests
         Assert.Equal(1, harness.ViewModel.SelectedFileExtensionBlacklistItem);
     }
 
+    /// <summary>
+    /// Behaves like the bound list boxes: a Reset of a list (what Clear and AddRange raise) drops the
+    /// selection bound to that list. Without it the view model alone would never show the defect.
+    /// </summary>
+    private static async Task<MainViewModelHarness> HarnessWithBothSelectionsAsync()
+    {
+        var harness = new MainViewModelHarness();
+        harness.ServeBlacklist(["a", "b", "c"], [".a", ".b", ".c"]);
+        await harness.ViewModel.InitializeAsync();
+        var vm = harness.ViewModel;
+        vm.DirectoryBlacklistItems.CollectionChanged += (_, _) => vm.SelectedDirectoryBlacklistItem = -1;
+        vm.FileExtensionBlacklistItems.CollectionChanged += (_, _) => vm.SelectedFileExtensionBlacklistItem = -1;
+        vm.SelectedDirectoryBlacklistItem = 1;
+        vm.SelectedFileExtensionBlacklistItem = 2;
+        return harness;
+    }
+
+    [Fact]
+    public async Task ACancelledDirectoryDialogKeepsTheFileExtensionSelection()
+    {
+        var harness = await HarnessWithBothSelectionsAsync();
+
+        harness.ViewModel.AddNewDirectoryBacklistItemCommand.Execute(null);
+
+        Assert.Equal(1, harness.ViewModel.SelectedDirectoryBlacklistItem);
+        Assert.Equal(2, harness.ViewModel.SelectedFileExtensionBlacklistItem);
+    }
+
+    [Fact]
+    public async Task ACancelledFileExtensionDialogKeepsTheDirectorySelection()
+    {
+        var harness = await HarnessWithBothSelectionsAsync();
+
+        harness.ViewModel.AddNewFileExtensionBacklistItemCommand.Execute(null);
+
+        Assert.Equal(1, harness.ViewModel.SelectedDirectoryBlacklistItem);
+        Assert.Equal(2, harness.ViewModel.SelectedFileExtensionBlacklistItem);
+    }
+
+    [Fact]
+    public async Task AnAddedDirectoryEntryKeepsTheFileExtensionSelection()
+    {
+        var harness = await HarnessWithBothSelectionsAsync();
+        harness.Dialogs
+            .Setup(d => d.ShowDialogAsync(It.IsAny<AddDirectoryBlacklistItemDialogViewModel>(), Host))
+            .Callback(() => harness.ServeBlacklist(["a", "b", "c", "d"], [".a", ".b", ".c"]))
+            .Returns(Task.CompletedTask);
+
+        harness.ViewModel.AddNewDirectoryBacklistItemCommand.Execute(null);
+
+        Assert.Equal(3, harness.ViewModel.SelectedDirectoryBlacklistItem);
+        Assert.Equal(2, harness.ViewModel.SelectedFileExtensionBlacklistItem);
+    }
+
+    [Fact]
+    public async Task AnAddedFileExtensionEntryKeepsTheDirectorySelection()
+    {
+        var harness = await HarnessWithBothSelectionsAsync();
+        harness.Dialogs
+            .Setup(d => d.ShowDialogAsync(It.IsAny<AddFileExtensionBlacklistItemDialogViewModel>(), Host))
+            .Callback(() => harness.ServeBlacklist(["a", "b", "c"], [".a", ".b", ".c", ".d"]))
+            .Returns(Task.CompletedTask);
+
+        harness.ViewModel.AddNewFileExtensionBacklistItemCommand.Execute(null);
+
+        Assert.Equal(1, harness.ViewModel.SelectedDirectoryBlacklistItem);
+        Assert.Equal(3, harness.ViewModel.SelectedFileExtensionBlacklistItem);
+    }
+
     [Fact]
     public async Task RemovingTheSelectedDirectoryEntryDropsItAndSavesTheRest()
     {
