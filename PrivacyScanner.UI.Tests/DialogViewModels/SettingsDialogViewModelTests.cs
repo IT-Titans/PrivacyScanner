@@ -16,12 +16,12 @@ using Xunit;
 namespace ITTitans.PrivacyScanner.UI.Tests.DialogViewModels;
 
 /// <summary>
-/// Covers the settings dialog that lists, deletes and (partly) edits regex rules.
+/// Covers the settings dialog that lists, deletes and edits regex rules.
 /// </summary>
 /// <remarks>
-/// Not covered on main without production seams: the failure branch of delete (static
-/// MessageBox.Show) and the edit flow (new Controls.EditRegexRuleDialog and the static
-/// DialogHost). Both need a WPF window, so they wait for the dialog-service seam.
+/// The failure branch of delete and the edit flow used to call the message box and the dialog host
+/// directly and needed a WPF window. Both now go through <see cref="IDialogService"/>, which is what
+/// the last four tests rely on.
 /// </remarks>
 public class SettingsDialogViewModelTests
 {
@@ -194,4 +194,85 @@ public class SettingsDialogViewModelTests
     {
         CreateSut().CloseCommand.Execute(null);
     }
+
+    [Fact]
+    public async Task FailedDeleteKeepsTheRuleAndReportsTheError()
+    {
+        SetupConfirmation(true);
+        _mediator
+            .Setup(m => m.Send(It.IsAny<DeleteRegexRuleCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(DeleteRegexRuleCommandResult.Failure("gesperrt"));
+        var sut = CreateSut();
+        var rule = Rule("Mail");
+        sut.Rules.Add(rule);
+
+        sut.DeleteRuleCommand.Execute(rule);
+        await Task.Yield();
+
+        Assert.Contains(rule, sut.Rules);
+
+        // Text and title are the ones the message box showed before the dialog service took over.
+        _dialogs.Verify(d => d.ShowError("Fehler beim Löschen der Regel: gesperrt", "Fehler"), Times.Once);
+    }
+
+    [Fact]
+    public async Task EditShowsTheRuleInTheSettingsDialogHost()
+    {
+        SetupNoStoredRules();
+        EditRegexRuleDialogViewModel? shown = null;
+        _dialogs
+            .Setup(d => d.ShowDialogAsync(It.IsAny<EditRegexRuleDialogViewModel>(), "SettingsDialogHost"))
+            .Callback((object viewModel, string _) => shown = (EditRegexRuleDialogViewModel)viewModel)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        sut.EditRuleCommand.Execute(Rule("Mail"));
+        await Task.Yield();
+
+        Assert.NotNull(shown);
+        Assert.Equal("Mail", shown.RuleName);
+        Assert.Equal("Mail.*", shown.Regex);
+    }
+
+    [Fact]
+    public async Task AnEditDialogThatAsksToCloseIsClosedInTheSettingsDialogHost()
+    {
+        SetupNoStoredRules();
+        _dialogs
+            .Setup(d => d.ShowDialogAsync(It.IsAny<EditRegexRuleDialogViewModel>(), "SettingsDialogHost"))
+            .Callback((object viewModel, string _) => ((EditRegexRuleDialogViewModel)viewModel).CancelCommand.Execute(null))
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        sut.EditRuleCommand.Execute(Rule("Mail"));
+        await Task.Yield();
+
+        _dialogs.Verify(d => d.CloseDialog("SettingsDialogHost"), Times.Once);
+    }
+
+    [Fact]
+    public async Task EditReloadsTheRulesOnceTheDialogHasClosed()
+    {
+        var rule = Rule("Mail");
+        _mediator
+            .Setup(m => m.Send(It.IsAny<GetAllRegexRulesQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetAllRegexRulesQueryResult
+            {
+                Rules = [new RegexRuleDto { RuleId = rule.RuleId, RuleName = "E-Mail", Rule = "@" }],
+            });
+        var sut = CreateSut();
+        sut.Rules.Add(rule);
+
+        sut.EditRuleCommand.Execute(rule);
+        await Task.Yield();
+
+        var reloaded = Assert.Single(sut.Rules);
+        Assert.Equal("E-Mail", reloaded.RuleName);
+        Assert.Equal("@", reloaded.Rule);
+    }
+
+    private void SetupNoStoredRules() =>
+        _mediator
+            .Setup(m => m.Send(It.IsAny<GetAllRegexRulesQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetAllRegexRulesQueryResult { Rules = [] });
 }
