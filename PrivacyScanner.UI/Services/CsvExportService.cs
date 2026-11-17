@@ -50,19 +50,36 @@ public class CsvExportService : ICsvExportService, IDisposable
 
             var line = string.Join(CsvSeparator,
                 EscapeCsvField(entry.Type.ToString()),
-                EscapeCsvField(entry.FilePath),
+                EscapeCsvText(entry.FilePath),
                 entry.Line.ToString(),
                 entry.Position.ToString(),
                 entry.End.ToString(),
-                EscapeCsvField(entry.RuleName ?? ""),
+                EscapeCsvText(entry.RuleName ?? ""),
                 EscapeCsvField(entry.SpacyLabel?.ToString() ?? ""),
-                EscapeCsvField(entry.PrevLine),
-                EscapeCsvField(entry.HitLine),
-                EscapeCsvField(entry.NextLine));
+                EscapeCsvText(entry.PrevLine),
+                EscapeCsvText(entry.HitLine),
+                EscapeCsvText(entry.NextLine));
 
             _writer.WriteLine(line);
             _writer.Flush();
         }
+    }
+
+    /// <summary>
+    /// Escapes a field that carries scanned content or file-system names. A leading
+    /// <c>=</c>, <c>+</c>, <c>-</c>, <c>@</c>, tab or carriage return would be run as a formula by
+    /// spreadsheet programs (CSV injection, OWASP), so such values get a leading apostrophe.
+    /// The apostrophe is added before quoting, so it ends up inside the quotes.
+    /// </summary>
+    private static string EscapeCsvText(string? field)
+    {
+        if (string.IsNullOrEmpty(field))
+            return "";
+
+        if (field[0] is '=' or '+' or '-' or '@' or '\t' or '\r')
+            field = "'" + field;
+
+        return EscapeCsvField(field);
     }
 
     private static string EscapeCsvField(string field)

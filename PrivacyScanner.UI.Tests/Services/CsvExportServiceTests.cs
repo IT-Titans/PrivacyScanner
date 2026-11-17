@@ -13,8 +13,8 @@ namespace ITTitans.PrivacyScanner.UI.Tests.Services;
 /// Covers the CSV file written while a scan runs.
 /// </summary>
 /// <remarks>
-/// Formula neutralisation (suspected defect P0-1, CsvExportService.cs:68-79) is deliberately
-/// not asserted in either direction; the working package says to leave it out until decided.
+/// Text fields that carry scanned content or file names are neutralised against spreadsheet
+/// formulas (OWASP CSV injection): a leading = + - @ tab or carriage return gets an apostrophe.
 /// </remarks>
 public sealed class CsvExportServiceTests : IDisposable
 {
@@ -132,6 +132,112 @@ public sealed class CsvExportServiceTests : IDisposable
         var text = ReadRaw(path);
         Assert.Contains("\"a\nb\"", text);
         Assert.Contains("\"c\rd\"", text);
+    }
+
+    // Minimal RFC 4180 reader with ';' as separator, used to check how a spreadsheet would split the row.
+    private static List<List<string>> Parse(string text)
+    {
+        var rows = new List<List<string>>();
+        var row = new List<string>();
+        var field = new StringBuilder();
+        var quoted = false;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (quoted)
+            {
+                if (c == '"' && i + 1 < text.Length && text[i + 1] == '"')
+                { field.Append('"'); i++; }
+                else if (c == '"')
+                    quoted = false;
+                else
+                    field.Append(c);
+            }
+            else if (c == '"')
+                quoted = true;
+            else if (c == ';')
+            { row.Add(field.ToString()); field.Clear(); }
+            else if (c == '\n' || (c == '\r' && i + 1 < text.Length && text[i + 1] == '\n'))
+            {
+                if (c == '\r')
+                    i++;
+                row.Add(field.ToString());
+                field.Clear();
+                rows.Add(row);
+                row = [];
+            }
+            else
+                field.Append(c);
+        }
+        return rows;
+    }
+
+    private string WriteAndRead(LogEntryViewModel entry)
+    {
+        var path = NewPath();
+        using var service = new CsvExportService();
+        service.InitializeExport(path);
+        service.WriteEntry(entry);
+        service.Close();
+        return ReadRaw(path);
+    }
+
+    [Theory]
+    [InlineData("=1+1", "'=1+1")]
+    [InlineData("+1", "'+1")]
+    [InlineData("-cmd", "'-cmd")]
+    [InlineData("@SUM(A1)", "'@SUM(A1)")]
+    [InlineData("\tx", "'\tx")]
+    [InlineData("\rx", "\"'\rx\"")]
+    public void WriteEntry_PrefixesAnApostropheToEveryTriggerCharacter(string value, string expected)
+    {
+        var entry = Entry(hit: value, prev: value, next: value);
+        entry.FilePath = value;
+        entry.RuleName = value;
+
+        var text = WriteAndRead(entry);
+        var line = Parse(text)[1];
+
+        Assert.Equal(10, line.Count);
+        foreach (var i in new[] { 1, 5, 7, 8, 9 })
+            Assert.Equal("'" + value, line[i]);
+        Assert.Contains(";" + expected + ";", text);
+    }
+
+    [Fact]
+    public void WriteEntry_TriggerTogetherWithQuotesAndSeparator_PrefixesInsideTheQuotes()
+    {
+        var text = WriteAndRead(Entry(hit: "=HYPERLINK(\"http://x\";\"a\")"));
+
+        Assert.Contains(";\"'=HYPERLINK(\"\"http://x\"\";\"\"a\"\")\";", text);
+        var line = Parse(text)[1];
+        Assert.Equal(10, line.Count);
+        Assert.Equal("'=HYPERLINK(\"http://x\";\"a\")", line[8]);
+    }
+
+    [Fact]
+    public void WriteEntry_TextColumnValueLookingLikeANegativeNumber_IsStillPrefixed()
+    {
+        var text = WriteAndRead(Entry(hit: "-123"));
+
+        Assert.Equal(@"Rule;C:\data\a.txt;12;3;6;Email;;prev;'-123;next", text.Split(Environment.NewLine)[1]);
+    }
+
+    [Fact]
+    public void WriteEntry_ValueWithTriggerCharacterOnlyInsideOrAtTheEnd_IsUnchanged()
+    {
+        var text = WriteAndRead(Entry(hit: "a=b-c+d@e=", prev: "x-", next: " =1"));
+
+        Assert.Equal(@"Rule;C:\data\a.txt;12;3;6;Email;;x-;a=b-c+d@e=; =1", text.Split(Environment.NewLine)[1]);
+    }
+
+    [Fact]
+    public void WriteEntry_NumericColumnsAreNotPrefixed()
+    {
+        var entry = Entry();
+        entry.Line = -1;
+
+        Assert.Equal(@"Rule;C:\data\a.txt;-1;3;6;Email;;prev;hit;next", WriteAndRead(entry).Split(Environment.NewLine)[1]);
     }
 
     [Fact]

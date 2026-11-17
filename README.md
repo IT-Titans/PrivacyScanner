@@ -33,7 +33,9 @@ Additionally, SpaCy can optionally be used to automatically detect personal data
 * Automatic detection and skipping of binary files
 * Results grouped by file → detection type (Regex/SpaCy) → rule/label, with a 3-line context preview
   (previous/hit/next line) per match and click-to-open-file
-* CSV export of all findings
+* CSV export of all findings; text values that start with `=`, `+`, `-`, `@`, a tab or a carriage return
+  are prefixed with an apostrophe so that spreadsheet programs show them as text instead of running them
+  as formulas
 * Settings (regex rules, blacklists) are stored per machine under `%ProgramData%\PrivacyScanner` and
   persist across app updates
  
