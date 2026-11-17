@@ -68,7 +68,7 @@ The executable is not code-signed, so Windows SmartScreen may warn on first star
 a `.sha256` file; compare it with the hash of your download before you run it:
 
 ```powershell
-(Get-FileHash '.PrivacyScanner-<version>-win-x64.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+(Get-FileHash '.\PrivacyScanner-<version>-win-x64.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
 ```
 
 Regex-based scanning works immediately; for SpaCy-based detection follow
