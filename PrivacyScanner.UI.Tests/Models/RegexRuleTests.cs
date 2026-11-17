@@ -5,7 +5,7 @@ using Xunit;
 namespace ITTitans.PrivacyScanner.UI.Tests.Models;
 
 /// <summary>
-/// Covers the rule model shown as chips, in particular its identity-based equality.
+/// Covers the rule model shown as chips, in particular that two instances are never equal, whatever their id.
 /// </summary>
 public class RegexRuleTests
 {
@@ -35,16 +35,14 @@ public class RegexRuleTests
     }
 
     [Fact]
-    public void Equality_DependsOnRuleIdOnly()
+    public void Equality_IsReferenceEquality()
     {
         var id = Guid.NewGuid();
         var a = new RegexRule { RuleId = id, RuleName = "A", Rule = "a" };
-        var b = new RegexRule { RuleId = id, RuleName = "B", Rule = "b", IsEnabled = false };
-        var c = new RegexRule { RuleId = Guid.NewGuid(), RuleName = "A", Rule = "a" };
+        var b = new RegexRule { RuleId = id, RuleName = "A", Rule = "a" };
 
-        Assert.True(a.Equals(b));
-        Assert.False(a.Equals(c));
-        Assert.Equal(a.GetHashCode(), b.GetHashCode());
+        Assert.True(a.Equals(a));
+        Assert.False(a.Equals(b));
     }
 
     [Fact]
@@ -57,11 +55,11 @@ public class RegexRuleTests
     }
 
     [Fact]
-    public void RulesWithSameId_CollapseInAHashSet()
+    public void RulesWithSameId_StayApartInAHashSet()
     {
         var id = Guid.NewGuid();
         var set = new HashSet<RegexRule> { new() { RuleId = id }, new() { RuleId = id } };
 
-        Assert.Single(set);
+        Assert.Equal(2, set.Count);
     }
 }

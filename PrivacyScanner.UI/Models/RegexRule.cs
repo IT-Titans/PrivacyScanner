@@ -17,17 +17,9 @@ public class RegexRule : ViewModelBase
         set => SetProperty(ref _isEnabled, value);
     }
 
-    public override bool Equals(object? obj)
-    {
-        if (obj is RegexRule other)
-        {
-            return RuleId == other.RuleId;
-        }
-        return false;
-    }
-
-    public override int GetHashCode()
-    {
-        return RuleId.GetHashCode();
-    }
+    // Deliberately no Equals/GetHashCode override, so rules compare by reference. An edited rule is
+    // reloaded as a new instance with the same id. With id equality WPF treats it as the same item and
+    // keeps the old UI Automation peer, so assistive technology reads a stale or empty chip. No automated
+    // test reproduces that peer state; it was verified against the running application with UI Automation.
+    // Nothing looks rules up by Equals (the only Remove acts on an instance taken from the list).
 }
