@@ -1,14 +1,10 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
-using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using ITTitans.PrivacyScanner.Infrastructure.Scanner.Services;
-using ITTitans.PrivacyScanner.UI.Services;
-using ITTitans.PrivacyScanner.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Extensions.Logging;
 
 namespace ITTitans.PrivacyScanner.UI;
 
@@ -21,8 +17,7 @@ public partial class App : Application
 
     public App()
     {
-        var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-        var path = Path.Combine(commonPath, "PrivacyScanner");
+        var path = new SettingsPathProvider().GetSettingsDirectory();
 
         Directory.CreateDirectory(path);
 
@@ -36,7 +31,8 @@ public partial class App : Application
         RegisterGlobalExceptionHandlers();
 
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        services.AddPrivacyScanner();
+        services.AddSingleton<MainWindow>();
         _serviceProvider = services.BuildServiceProvider();
     }
 
@@ -69,32 +65,6 @@ public partial class App : Application
             Log.Logger.Error(e.Exception, "Unobserved exception in a fire-and-forget task");
             e.SetObserved();
         };
-    }
-
-    private void ConfigureServices(IServiceCollection services)
-    {
-        services.AddMediator(options =>
-        {
-            options.ServiceLifetime = ServiceLifetime.Singleton;
-        });
-        services.AddSingleton<IProcessService, ProcessService>();
-        services.AddSingleton<IDirectoryProvider, DirectoryProvider>();
-        services.AddSingleton<IScannerStateService, ScannerStateService>();
-        services.AddSingleton<IDialogService, DialogService>();
-        services.AddSingleton<ICsvExportService, CsvExportService>();
-        services.AddSingleton<MainWindow>();
-        services.AddSingleton<MainViewModel>();
-
-        services.AddLogging(builder =>
-        {
-            builder.ClearProviders();
-        });
-
-        var loggerFactory = new Serilog.Extensions.Logging.SerilogLoggerFactory();
-
-        services.AddSingleton<ILoggerFactory>(loggerFactory);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
     }
 
     protected override void OnStartup(StartupEventArgs e)

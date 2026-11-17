@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
@@ -10,7 +9,6 @@ using ITTitans.PrivacyScanner.UI.Models;
 using ITTitans.PrivacyScanner.UI.Services;
 using Mediator;
 using Microsoft.Extensions.Logging;
-using Microsoft.Win32;
 using ICommand = System.Windows.Input.ICommand;
 
 namespace ITTitans.PrivacyScanner.UI.ViewModels;
@@ -23,6 +21,9 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private readonly IMediator _mediator;
     private readonly IDialogService _dialogService;
     private readonly ICsvExportService _csvExportService;
+    private readonly IUiDispatcher _uiDispatcher;
+    private readonly IFilePickerService _filePickerService;
+    private readonly IFileLauncher _fileLauncher;
     private string _selectedPath = string.Empty;
     private string _exportFilePath = string.Empty;
     private string _regexSearchText = string.Empty;
@@ -47,17 +48,30 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private bool _isProgressIndeterminate;
     private bool _wasScanCancelled;
 
-    public MainViewModel(IMediator mediator, ILogger<MainViewModel> logger, IDialogService dialogService, ICsvExportService csvExportService)
+    public MainViewModel(
+        IMediator mediator,
+        ILogger<MainViewModel> logger,
+        IDialogService dialogService,
+        ICsvExportService csvExportService,
+        IUiDispatcher uiDispatcher,
+        IFilePickerService filePickerService,
+        IFileLauncher fileLauncher)
     {
         ArgumentNullException.ThrowIfNull(mediator);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(csvExportService);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(filePickerService);
+        ArgumentNullException.ThrowIfNull(fileLauncher);
 
         _mediator = mediator;
         _logger = logger;
         _dialogService = dialogService;
         _csvExportService = csvExportService;
+        _uiDispatcher = uiDispatcher;
+        _filePickerService = filePickerService;
+        _fileLauncher = fileLauncher;
 
         SelectPathCommand = new RelayCommand(_ => OnSelectPath(), _ => !IsScanning);
         SelectExportFileCommand = new RelayCommand(_ => OnSelectExportFile(), _ => !IsScanning);
@@ -81,6 +95,12 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     public ICommand OpenFileCommand { get; }
 
+    /// <summary>
+    /// The background task of the scan started last, or a completed task if none was started yet.
+    /// The scan is started fire-and-forget; this is the handle that lets a test wait for its end.
+    /// </summary>
+    internal Task ScanCompletion { get; private set; } = Task.CompletedTask;
+
     public bool IsScanning
     {
         get => _isScanning;
@@ -88,7 +108,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         {
             if (SetProperty(ref _isScanning, value))
             {
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+                _uiDispatcher.Post(() =>
                 {
                     (ToggleScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
                     (StartScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -199,7 +219,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void RaiseCanExecuteChanged()
     {
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        _uiDispatcher.Post(() =>
         {
             (ToggleScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (StartScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -350,7 +370,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnOpenFile(string? filePath)
     {
-        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        if (string.IsNullOrWhiteSpace(filePath) || !_fileLauncher.Exists(filePath))
         {
             _logger.LogWarning("Datei konnte nicht geöffnet werden: {FilePath}", filePath);
             return;
@@ -358,11 +378,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
         try
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = filePath,
-                UseShellExecute = true
-            });
+            _fileLauncher.Open(filePath);
         }
         catch (Exception ex)
         {
@@ -372,27 +388,23 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     private void OnSelectPath()
     {
-        var dialog = new OpenFolderDialog();
-        if (dialog.ShowDialog() == true)
+        var folder = _filePickerService.PickFolder();
+        if (folder != null)
         {
-            SelectedPath = dialog.FolderName;
+            SelectedPath = folder;
         }
     }
 
     private async void OnSelectExportFile()
     {
-        var dialog = new SaveFileDialog
-        {
-            Filter = "CSV-Dateien (*.csv)|*.csv|Alle Dateien (*.*)|*.*",
-            DefaultExt = ".csv",
-            Title = "Export-Datei auswählen"
-        };
+        var selectedPath = _filePickerService.PickSaveFile(
+            filter: "CSV-Dateien (*.csv)|*.csv|Alle Dateien (*.*)|*.*",
+            defaultExtension: ".csv",
+            title: "Export-Datei auswählen");
 
-        if (dialog.ShowDialog() == true)
+        if (selectedPath != null)
         {
-            var selectedPath = dialog.FileName;
-
-            if (File.Exists(selectedPath))
+            if (_fileLauncher.Exists(selectedPath))
             {
                 var overwrite = await _dialogService.ShowConfirmationAsync(
                     "Datei existiert bereits",
@@ -483,7 +495,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             }
         }
 
-        _ = Task.Run(async () =>
+        ScanCompletion = Task.Run(async () =>
         {
             try
             {
@@ -523,7 +535,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         _csvExportService.Close();
         _logger.LogInformation("CSV-Export abgeschlossen");
 
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        _uiDispatcher.Post(() =>
         {
             IsProgressIndeterminate = false;
             if (_wasScanCancelled)
@@ -573,16 +585,12 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private async void OnOpenSettings()
     {
         var dialogViewModel = new SettingsDialogViewModel(_mediator, _dialogService);
-        var dialog = new Controls.SettingsDialog
-        {
-            DataContext = dialogViewModel
-        };
 
-        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+        dialogViewModel.RequestClose += () => _dialogService.CloseDialog("RootDialog");
 
         _ = dialogViewModel.InitializeAsync();
 
-        await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+        await _dialogService.ShowDialogAsync(dialogViewModel, "RootDialog");
 
         // After closing the dialog, reload the rules
         // to make sure the main UI is up to date.
@@ -592,14 +600,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private async void OnAddNewDirectoryBlacklistItem()
     {
         var dialogViewModel = new AddDirectoryBlacklistItemDialogViewModel(_mediator);
-        var dialog = new Controls.AddDirectoryBlacklistItemDialog()
-        {
-            DataContext = dialogViewModel
-        };
 
-        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+        dialogViewModel.RequestClose += () => _dialogService.CloseDialog("RootDialog");
 
-        var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+        await _dialogService.ShowDialogAsync(dialogViewModel, "RootDialog");
 
         await LoadBlacklistItemsAsync();
 
@@ -623,14 +627,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private async void OnAddNewFileExtensionBlacklistItem()
     {
         var dialogViewModel = new AddFileExtensionBlacklistItemDialogViewModel(_mediator);
-        var dialog = new Controls.AddFileExtensionBlacklistItemDialog()
-        {
-            DataContext = dialogViewModel
-        };
 
-        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+        dialogViewModel.RequestClose += () => _dialogService.CloseDialog("RootDialog");
 
-        var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+        await _dialogService.ShowDialogAsync(dialogViewModel, "RootDialog");
 
         await LoadBlacklistItemsAsync();
 
@@ -686,14 +686,10 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
     private async void OnAddNewRegex()
     {
         var dialogViewModel = new AddRegexDialogViewModel(_mediator);
-        var dialog = new Controls.AddRegexDialog
-        {
-            DataContext = dialogViewModel
-        };
 
-        dialogViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("RootDialog");
+        dialogViewModel.RequestClose += () => _dialogService.CloseDialog("RootDialog");
 
-        var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "RootDialog");
+        await _dialogService.ShowDialogAsync(dialogViewModel, "RootDialog");
 
         // After closing the dialog, reload the rules
         // to make sure everything is up to date.
@@ -754,7 +750,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         }
 
         // Dispatch asynchronously in a batch to minimize UI load
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+        _uiDispatcher.Post(() =>
         {
             TotalWarningsCount += items.Count;
             RegexWarningsCount += regexCount;
@@ -762,7 +758,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
             UpdateTreeNodes(notification.ScanResultDto.FilePath.FullName, items.Count);
             UpdatePagedLogTreeNodes();
-        }));
+        });
 
         return ValueTask.CompletedTask;
     }
@@ -849,7 +845,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             warnings.AddRange(scanResult.Warnings.Select(w => MapToViewModel(w, fileNode.FullPath)));
 
             // Update UI
-            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            await _uiDispatcher.InvokeAsync(() =>
             {
                 fileNode.Children.Clear();
                 BuildDetailNodes(fileNode, warnings);
@@ -859,7 +855,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fehler beim Laden der Details für {FilePath}", fileNode.FullPath);
-            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            await _uiDispatcher.InvokeAsync(() =>
             {
                 fileNode.Children.Clear();
                 fileNode.Children.Add(new LoadingLogNodeViewModel { Title = "Fehler beim Laden" });
@@ -910,7 +906,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             return;
         typeNode.IsLoading = true;
 
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        _uiDispatcher.Post(() =>
         {
             typeNode.Children.Clear();
             foreach (var group in typeNode.Warnings.GroupBy(w => w.Type == ScanWarningType.SpaCy ? w.SpacyLabel?.ToString() ?? "Unknown" : w.RuleName ?? "Unknown"))
@@ -937,7 +933,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             return;
         groupNode.IsLoading = true;
 
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        _uiDispatcher.Post(() =>
         {
             groupNode.Children.Clear();
 
@@ -961,7 +957,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
 
     public ValueTask Handle(FileProcessedEvent notification, CancellationToken cancellationToken)
     {
-        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+        _uiDispatcher.Post(() =>
         {
             // Exit indeterminate mode once we know the total count
             if (IsProgressIndeterminate && notification.TotalFilesCount > 0)
@@ -971,7 +967,7 @@ public class MainViewModel : ViewModelBase, INotificationHandler<FoundWarningEve
             ScannedFilesCount = notification.ScannedFilesCount;
             TotalFilesCount = notification.TotalFilesCount;
             Progress = notification.ProgressInPercent;
-        }));
+        });
 
         return ValueTask.CompletedTask;
     }

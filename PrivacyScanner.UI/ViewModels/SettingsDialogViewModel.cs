@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
@@ -81,11 +80,9 @@ public class SettingsDialogViewModel : ViewModelBase
             }
             else
             {
-                MessageBox.Show(
+                _dialogService.ShowError(
                     $"Fehler beim Löschen der Regel: {result.ErrorMessage}",
-                    "Fehler",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Fehler");
             }
         }
     }
@@ -96,14 +93,10 @@ public class SettingsDialogViewModel : ViewModelBase
             return;
 
         var editViewModel = new EditRegexRuleDialogViewModel(_mediator, rule);
-        var dialog = new Controls.EditRegexRuleDialog
-        {
-            DataContext = editViewModel
-        };
 
-        editViewModel.RequestClose += () => MaterialDesignThemes.Wpf.DialogHost.Close("SettingsDialogHost");
+        editViewModel.RequestClose += () => _dialogService.CloseDialog("SettingsDialogHost");
 
-        await MaterialDesignThemes.Wpf.DialogHost.Show(dialog, "SettingsDialogHost");
+        await _dialogService.ShowDialogAsync(editViewModel, "SettingsDialogHost");
 
         // Reload the list after editing
         await LoadRulesAsync();

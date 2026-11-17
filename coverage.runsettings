@@ -11,6 +11,15 @@
   WPF modal dialogs. Both are honestly untestable without driving a UI, and excluding
   them is the only way the remaining figure says something true.
 
+  Three thin adapters, each named individually instead of matched by a pattern:
+    Services/WpfUiDispatcher.cs    forwards to the dispatcher of the running WPF application
+    Services/FilePickerService.cs  opens the Windows folder and save-file dialogs
+    Services/FileLauncher.cs       asks the shell to open a file with its registered program
+  They exist so that everything calling them can be tested. Each one is a straight
+  pass-through without a branch worth testing, and exercising them for real would need
+  a running application, a person clicking a dialog, or starting a foreign program.
+  Anything with logic does not belong in these files.
+
   What is NOT excluded: ViewModels, converters and commands. Together they are the
   large majority of PrivacyScanner.UI and they are ordinary classes. Leaving them out
   would be the difference between a coverage figure and a flattering one.
@@ -24,7 +33,7 @@
 
           <ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
 
-          <ExcludeByFile>**/obj/**/*.cs,**/*.Designer.cs,**/*.g.cs,**/*.g.i.cs,**/*.generated.cs,**/*.xaml.cs,**/Services/DialogService.cs</ExcludeByFile>
+          <ExcludeByFile>**/obj/**/*.cs,**/*.Designer.cs,**/*.g.cs,**/*.g.i.cs,**/*.generated.cs,**/*.xaml.cs,**/Services/DialogService.cs,**/Services/WpfUiDispatcher.cs,**/Services/FilePickerService.cs,**/Services/FileLauncher.cs</ExcludeByFile>
 
           <Exclude>[*.Tests]*</Exclude>
 

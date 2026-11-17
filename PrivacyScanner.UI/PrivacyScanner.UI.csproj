@@ -8,6 +8,11 @@
         <ApplicationIcon>Resources\PrivacyScannerLogo.ico</ApplicationIcon>
     </PropertyGroup>
     <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>ITTitans.PrivacyScanner.UI.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="MaterialDesignColors" />
         <PackageReference Include="MaterialDesignThemes" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />

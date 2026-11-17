@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Services;
 using Mediator;
 
 namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
@@ -7,12 +8,11 @@ namespace ITTitans.PrivacyScanner.Infrastructure.Scanner.Commands;
 /// <summary>
 /// Persists the full list of regex rules to disk as JSON.
 /// </summary>
-public class SaveRegexRulesCommandHandler : IRequestHandler<SaveRegexRulesCommand>
+public class SaveRegexRulesCommandHandler(ISettingsPathProvider settingsPathProvider) : IRequestHandler<SaveRegexRulesCommand>
 {
     public async ValueTask<Unit> Handle(SaveRegexRulesCommand request, CancellationToken cancellationToken)
     {
-        var commonPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-        var path = Path.Combine(commonPath, "PrivacyScanner");
+        var path = settingsPathProvider.GetSettingsDirectory();
 
         Directory.CreateDirectory(path);
 
