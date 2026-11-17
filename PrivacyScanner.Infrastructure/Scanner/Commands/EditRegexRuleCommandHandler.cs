@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Queries;
 using ITTitans.PrivacyScanner.Model;
@@ -25,13 +26,18 @@ public class EditRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<E
         {
             return EditRegexRuleCommandResult.Failure("Missing information what to change");
         }
+        else if (request.Rule != null && !IsValidRegex(request.Rule))
+        {
+            return EditRegexRuleCommandResult.Failure("Der eingegebene Regex ist ungültig");
+        }
         else if (request.Rule != null && request.RuleName != null)
         {
             var regexDto = new RegexRuleDto
             {
                 RuleName = request.RuleName,
                 Rule = request.Rule,
-                RuleId = regexToEdit.RuleId
+                RuleId = regexToEdit.RuleId,
+                IsEnabled = regexToEdit.IsEnabled
             };
 
             regexRuleDtos.Rules.Remove(regexToEdit);
@@ -43,7 +49,8 @@ public class EditRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<E
             {
                 RuleName = request.RuleName!,
                 Rule = regexToEdit.Rule,
-                RuleId = regexToEdit.RuleId
+                RuleId = regexToEdit.RuleId,
+                IsEnabled = regexToEdit.IsEnabled
             };
 
             regexRuleDtos.Rules.Remove(regexToEdit);
@@ -55,7 +62,8 @@ public class EditRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<E
             {
                 RuleName = regexToEdit.RuleName,
                 Rule = request.Rule,
-                RuleId = regexToEdit.RuleId
+                RuleId = regexToEdit.RuleId,
+                IsEnabled = regexToEdit.IsEnabled
             };
 
             regexRuleDtos.Rules.Remove(regexToEdit);
@@ -65,5 +73,22 @@ public class EditRegexRuleCommandHandler(IMediator mediator) : IRequestHandler<E
         await mediator.Send(new SaveRegexRulesCommand { RegexRuleDtos = regexRuleDtos.Rules });
 
         return EditRegexRuleCommandResult.Success();
+    }
+
+    private static bool IsValidRegex(string pattern)
+    {
+        if (string.IsNullOrWhiteSpace(pattern))
+            return false;
+
+        try
+        {
+            _ = Regex.Match("Test", pattern);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+
+        return true;
     }
 }
