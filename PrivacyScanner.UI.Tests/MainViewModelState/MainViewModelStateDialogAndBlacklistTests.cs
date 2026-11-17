@@ -1,4 +1,5 @@
 using ITTitans.PrivacyScanner.Infrastructure.Contracts.Scanner.Commands;
+using ITTitans.PrivacyScanner.Model;
 using ITTitans.PrivacyScanner.UI.Tests.TestSupport;
 using ITTitans.PrivacyScanner.UI.ViewModels;
 
@@ -32,6 +33,31 @@ public class MainViewModelStateDialogAndBlacklistTests
         harness.ViewModel.OpenSettingsCommand.Execute(null);
 
         Assert.Equal(["Neu", "Noch neuer"], harness.ViewModel.FilteredRegexRules.Select(r => r.RuleName));
+    }
+
+    [Fact]
+    public async Task AnEditedRuleIsExposedWithItsNewNameAndTheToggleActsOnIt()
+    {
+        var harness = new MainViewModelHarness();
+        var original = Rule("Alt");
+        harness.ServeRules(original);
+        await harness.ViewModel.InitializeAsync();
+        var oldInstance = harness.ViewModel.FilteredRegexRules[0];
+        harness.Dialogs
+            .Setup(d => d.ShowDialogAsync(It.IsAny<SettingsDialogViewModel>(), Host))
+            .Callback(() => harness.ServeRules(new RegexRuleDto { RuleId = original.RuleId, RuleName = "Neu", Rule = "y+", IsEnabled = true }))
+            .Returns(Task.CompletedTask);
+        harness.ViewModel.OpenSettingsCommand.Execute(null);
+
+        var exposed = Assert.Single(harness.ViewModel.FilteredRegexRules);
+        harness.ViewModel.ToggleRuleCommand.Execute(exposed);
+
+        Assert.NotSame(oldInstance, exposed);
+        Assert.Equal("Neu", exposed.RuleName);
+        harness.Mediator.Verify(m => m.Send(
+            It.Is<SaveRegexRulesCommand>(c => c.RegexRuleDtos.Count == 1
+                && c.RegexRuleDtos[0].RuleName == "Neu" && !c.RegexRuleDtos[0].IsEnabled),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
