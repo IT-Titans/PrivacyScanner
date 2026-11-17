@@ -47,14 +47,26 @@ public class GetAllFilePathsInDirectoryQueryHandler(IDirectoryProvider directory
             }
         }
 
+        var fileName = Path.GetFileName(path.AsSpan());
+
         foreach (var blacklistedFileExtension in fileBlacklist)
         {
-            if (Path.GetExtension(path).Equals(blacklistedFileExtension, StringComparison.InvariantCultureIgnoreCase))
+            if (EndsWithExtension(fileName, blacklistedFileExtension))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    // An entry is a dotted suffix of the file name (".cs", ".g.cs"). Path.GetExtension only yields the last part,
+    // so multi-part entries could never match. Entries without a leading dot or consisting of the dot alone never
+    // matched before and still do not. A file named exactly like the entry (".gitignore") matches, as before.
+    private static bool EndsWithExtension(ReadOnlySpan<char> fileName, string extension)
+    {
+        return extension.Length > 1
+            && extension[0] == '.'
+            && fileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
     }
 }

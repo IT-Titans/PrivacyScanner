@@ -80,6 +80,34 @@ public class GetAllFilePathsInDirectoryQueryHandlerTests
         Assert.Equal("Program.cs", Assert.Single(result.FilePaths).Name);
     }
 
+    [Theory]
+    [InlineData(".g.cs", "Foo.g.cs", true)]
+    [InlineData(".g.cs", "Foo.G.CS", true)]
+    [InlineData(".g.cs", "Foo.cs", false)]
+    [InlineData(".g.cs", "my.g.csx", false)]
+    [InlineData(".g.cs", "my.g.cs.txt", false)]
+    [InlineData(".g.cs", "g.cs", false)]
+    [InlineData(".g.cs", "Foo.dg.cs", false)]
+    [InlineData(".cs", "a.cs", true)]
+    [InlineData(".cs", "a.g.cs", true)]
+    [InlineData(".cs", "a.csx", false)]
+    [InlineData(".gitignore", ".gitignore", true)]
+    [InlineData(".gitignore", "x.gitignore", true)]
+    [InlineData("cs", "a.cs", false)]
+    [InlineData(".", "a.", false)]
+    [InlineData("", "a", false)]
+    public async Task Handle_FileExtensionBlacklistEntry_MatchesOnlyTheEndOfTheFileName(string entry, string fileName, bool isExcluded)
+    {
+        SetupExistingFiles(Combine("root", "dir.g.cs", fileName));
+        var sut = new GetAllFilePathsInDirectoryQueryHandler(_directoryProviderMock.Object);
+
+        var result = await sut.Handle(
+            BuildQuery(Combine("root"), fileExtensionBlacklist: [entry]),
+            CancellationToken.None);
+
+        Assert.Equal(isExcluded ? 0 : 1, result.FileCount);
+    }
+
     [Fact]
     public async Task Handle_NoBlacklistMatches_ReturnsAllFiles()
     {
