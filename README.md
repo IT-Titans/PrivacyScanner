@@ -3,8 +3,9 @@
 PrivacyScanner is a .NET tool for scanning files for sensitive and personal data.
 Detection is done through **configurable regex patterns** and optionally via **SpaCy** (Natural Language Processing).
 
-**Status:** Maintained. No versioned release has been published yet, so the only way to run the tool
-today is to [build it from source](#build-and-run-from-source).
+**Status:** Maintained. Released versions are on the
+[releases page](https://github.com/IT-Titans/PrivacyScanner/releases/latest); you can also
+[build it from source](#build-and-run-from-source).
  
 > **Note:** PrivacyScanner was built by an apprentice at IT Titans GmbH as part of
 > their professional training, with the assistance of AI coding tools during design and implementation. It should be
@@ -59,11 +60,18 @@ Additionally, SpaCy can optionally be used to automatically detect personal data
  
 ### Run the prebuilt executable
 
-There is no prebuilt executable to download at the moment. The [CI/CD pipeline](.github/workflows/pipeline.yml)
-builds a self-contained, single-file `Privacy Scanner.exe` (win-x64, no separate .NET install required) on
-every run, but only as a build artifact: GitHub deletes those after 90 days, they need a GitHub login to
-download, and no release has been published yet. Until the first release, build from source as described
-below. Regex-based scanning then works immediately; for SpaCy-based detection follow
+Download `PrivacyScanner-<version>-win-x64.exe` from the
+[latest release](https://github.com/IT-Titans/PrivacyScanner/releases/latest). It is a self-contained,
+single-file executable for Windows x64; no separate .NET installation is required.
+
+The executable is not code-signed, so Windows SmartScreen may warn on first start. Each release carries
+a `.sha256` file; compare it with the hash of your download before you run it:
+
+```powershell
+(Get-FileHash '.\PrivacyScanner-<version>-win-x64.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+```
+
+Regex-based scanning works immediately; for SpaCy-based detection follow
 [install.md](install.md) first.
  
 ### Build and run from source
