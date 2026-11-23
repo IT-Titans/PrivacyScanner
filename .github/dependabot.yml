@@ -31,6 +31,11 @@ updates:
       - dependency-name: "Microsoft.Extensions.*"
         update-types:
           - version-update:semver-major
+      # Serilog's bridge to Microsoft.Extensions.Logging takes its major from the
+      # Microsoft.Extensions version it requires; version 11 does not restore on .NET 10.
+      - dependency-name: "Serilog.Extensions.*"
+        update-types:
+          - version-update:semver-major
     groups:
       # Released together; a mixed pair is not a supported combination.
       material-design:
